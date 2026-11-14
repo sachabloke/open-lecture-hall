@@ -74,6 +74,7 @@ select, .toggle { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px
 .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tag { font: 600 12px/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
 .tag.n { background: transparent; color: var(--muted); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tag.rank { background: var(--ink); color: var(--panel); }
 .tag.saved { background: transparent; color: var(--saved); border: 1px solid currentColor; }
 .links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; font-weight: 600; }
 .links button { font: inherit; font-size: 14px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
@@ -129,9 +130,10 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
       <label class="toggle"><input type="checkbox" id="av" checked> Video or audio only</label>
       <label class="toggle"><input type="checkbox" id="saved"> Saved on Internet Archive</label>
       <label class="toggle"><input type="checkbox" id="pod"> Podcast feed</label>
+      <label class="toggle"><input type="checkbox" id="top"> World top 100 universities</label>
       <select id="inst" aria-label="University"><option value="">All universities</option></select>
       <select id="sort" aria-label="Sort">
-        <option value="best">Recommended</option>
+        <option value="best">Top universities first</option>
         <option value="most">Most lectures first</option>
         <option value="az">A to Z</option>
         <option value="new">Newest first</option>
@@ -149,6 +151,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     <h3>About this site</h3>
     <p>Free lecture recordings are disappearing. Universities move platforms, close channels and delete old webcasts. This site gathers the courses that are still free to watch or listen to, and points to Internet Archive copies where they exist so they stay findable.</p>
     <p>Everything listed is free to use without an account. Certificates and graded work on some platforms cost money; the lectures themselves do not. Podcast feeds work in any podcast app: copy the feed link and paste it in as "add by URL".</p>
+    <p>Courses are listed with the strongest universities first, using broad bands from the main world rankings (QS and Times Higher Education): world top 25, world top 100, then other ranked universities, then colleges, academies and independent lecturers. Rankings are a rough guide to a university, not to any one lecturer.</p>
     <p id="updated"></p>
   </footer>
 </main>
@@ -175,7 +178,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     data = d;
     all = d.rows.map((r, i) => {
       const o = { i, title: r[0], inst: d.institutions[r[1]], instIdx: r[1], who: r[2], subj: r[3], year: r[4], bits: r[5],
-        n: r[6], url: r[7], arch: r[8], feed: r[9], desc: r[10], lang: r[11], lid: r[12] || "" };
+        n: r[6], url: r[7], arch: r[8], feed: r[9], desc: r[10], lang: r[11], lid: r[12] || "", rank: r[13] || 4 };
       o.av = (o.bits & 3) !== 0;
       o.saved = /archive\.org/.test(o.arch || o.url);
       o.hay = fold([o.title, o.inst, o.who, o.desc, d.subjects[o.subj], o.year].join(" "));
@@ -207,7 +210,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
 
     let t;
     $("q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 150); });
-    ["av", "saved", "pod", "inst", "sort"].forEach((id) => $(id).addEventListener("change", run));
+    ["av", "saved", "pod", "top", "inst", "sort"].forEach((id) => $(id).addEventListener("change", run));
     $("more").addEventListener("click", () => render(false));
     $("list").addEventListener("click", copyFeed);
     $("list").addEventListener("click", onLectures);
@@ -216,17 +219,17 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
 
   function run() {
     const words = fold($("q").value).split(/\s+/).filter(Boolean);
-    const av = $("av").checked, saved = $("saved").checked, pod = $("pod").checked, inst = $("inst").value;
+    const av = $("av").checked, saved = $("saved").checked, pod = $("pod").checked, top = $("top").checked, inst = $("inst").value;
     hits = all.filter((o) =>
-      (subject < 0 || o.subj === subject) && (!av || o.av) && (!saved || o.saved) && (!pod || o.feed) &&
+      (subject < 0 || o.subj === subject) && (!av || o.av) && (!saved || o.saved) && (!pod || o.feed) && (!top || o.rank <= 2) &&
       (!inst || o.inst === inst) && words.every((w) => o.hay.includes(w)));
     const sort = $("sort").value;
     if (words.length) {
       // titles that contain the search words rank first
       const tf = (o) => words.filter((w) => fold(o.title).includes(w)).length;
-      hits.sort((a, b) => tf(b) - tf(a) || (b.av - a.av) || b.n - a.n);
+      hits.sort((a, b) => tf(b) - tf(a) || (b.av - a.av) || a.rank - b.rank || b.n - a.n);
     } else if (sort === "az") hits.sort((a, b) => a.title.localeCompare(b.title));
-    else if (sort === "most") hits.sort((a, b) => b.n - a.n || a.i - b.i);
+    else if (sort === "most") hits.sort((a, b) => b.n - a.n || a.rank - b.rank || a.i - b.i);
     else if (sort === "new") hits.sort((a, b) => (b.year || "0").localeCompare(a.year || "0") || b.n - a.n);
     else hits.sort((a, b) => a.i - b.i);
     $("count").textContent = hits.length === 1 ? "1 course" : hits.length.toLocaleString() + " courses";
@@ -236,6 +239,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
   function card(o) {
     const fm = FMT.filter((f, k) => o.bits & (1 << k)).map((f) => `<span class="tag">${FMT_LABEL[f]}</span>`).join("");
     const n = o.n ? `<span class="tag n">${o.n.toLocaleString()} ${o.n === 1 ? "session" : (o.feed && !o.arch ? "episodes" : "lectures")}</span>` : "";
+    const rk = o.rank <= 2 ? `<span class="tag rank">${o.rank === 1 ? "World top 25" : "World top 100"}</span>` : "";
     const sv = o.saved ? `<span class="tag saved">Saved on Internet Archive</span>` : "";
     const url = safeUrl(o.url), arch = safeUrl(o.arch), feed = safeUrl(o.feed);
     const links = [`<a href="${esc(url)}" target="_blank" rel="noopener">Course page</a>`];
@@ -254,7 +258,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     return `<li class="card"><h2><a href="${esc(url)}" target="_blank" rel="noopener">${esc(o.title)}</a></h2>
       <div class="meta">${meta.join("")}</div>
       ${o.desc ? `<p class="desc">${esc(o.desc)}</p>` : ""}
-      <div class="tags">${fm}${n}${sv}</div>
+      <div class="tags">${rk}${fm}${n}${sv}</div>
       ${watch}
       <div class="links">${links.join("")}</div></li>`;
   }

@@ -77,6 +77,22 @@ select, .toggle { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px
 .tag.saved { background: transparent; color: var(--saved); border: 1px solid currentColor; }
 .links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; font-weight: 600; }
 .links button { font: inherit; font-size: 14px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.watch { justify-self: start; font: 600 15px var(--body); padding: 10px 16px; border-radius: 10px; border: 0; background: var(--accent); color: var(--bg); cursor: pointer; }
+.watch[aria-expanded="true"] { background: var(--ink); }
+.lecbox { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; min-width: 0; }
+.player { display: grid; gap: 6px; min-width: 0; }
+.player iframe, .player video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; background: #000; }
+.player audio { width: 100%; }
+.player .now { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.player .alt { font-size: 13px; color: var(--muted); }
+.lecs { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 420px; overflow-y: auto; counter-reset: lec; }
+.lecs li { display: flex; gap: 10px; align-items: baseline; padding: 6px 4px; border-radius: 6px; counter-increment: lec; min-width: 0; }
+.lecs li::before { content: counter(lec); flex: none; width: 2.2em; text-align: right; color: var(--muted); font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+.lecs li.on { background: var(--accent-soft); }
+.lecs button { flex: 1; min-width: 0; text-align: left; font: inherit; font-size: 15px; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; overflow-wrap: anywhere; }
+.lecs button:hover { color: var(--accent); text-decoration: underline; }
+.lecs a { flex: none; font-size: 13px; }
+.lecnote { font-size: 13px; color: var(--muted); margin: 0; }
 .more { display: block; margin: 20px auto 8px; font: 600 15px var(--body); padding: 12px 22px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink); cursor: pointer; }
 .empty, .loading { padding: 40px 0; text-align: center; color: var(--muted); }
 
@@ -159,7 +175,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     data = d;
     all = d.rows.map((r, i) => {
       const o = { i, title: r[0], inst: d.institutions[r[1]], instIdx: r[1], who: r[2], subj: r[3], year: r[4], bits: r[5],
-        n: r[6], url: r[7], arch: r[8], feed: r[9], desc: r[10], lang: r[11] };
+        n: r[6], url: r[7], arch: r[8], feed: r[9], desc: r[10], lang: r[11], lid: r[12] || "" };
       o.av = (o.bits & 3) !== 0;
       o.saved = /archive\.org/.test(o.arch || o.url);
       o.hay = fold([o.title, o.inst, o.who, o.desc, d.subjects[o.subj], o.year].join(" "));
@@ -169,7 +185,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     const av = all.filter((o) => o.av).length;
     $("stats").innerHTML =
       `<span><b>${all.length.toLocaleString()}</b> free courses and series</span>` +
-      `<span><b>${av.toLocaleString()}</b> with video or audio lectures</span>` +
+      `<span><b>${all.filter((o) => o.lid).reduce((s, o) => s + o.n, 0).toLocaleString()}</b> individual lectures you can play here</span>` +
       `<span><b>${insts.size}</b> universities and sources</span>`;
     $("updated").textContent = "Catalogue last updated " + d.updated + ".";
 
@@ -194,6 +210,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     ["av", "saved", "pod", "inst", "sort"].forEach((id) => $(id).addEventListener("change", run));
     $("more").addEventListener("click", () => render(false));
     $("list").addEventListener("click", copyFeed);
+    $("list").addEventListener("click", onLectures);
     run();
   }
 
@@ -221,7 +238,12 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
     const n = o.n ? `<span class="tag n">${o.n.toLocaleString()} ${o.n === 1 ? "session" : (o.feed && !o.arch ? "episodes" : "lectures")}</span>` : "";
     const sv = o.saved ? `<span class="tag saved">Saved on Internet Archive</span>` : "";
     const url = safeUrl(o.url), arch = safeUrl(o.arch), feed = safeUrl(o.feed);
-    const links = [`<a href="${esc(url)}" target="_blank" rel="noopener">Open course</a>`];
+    const links = [`<a href="${esc(url)}" target="_blank" rel="noopener">Course page</a>`];
+    const ytList = /youtube\.com\/(playlist|.*[?&]list=)/.test(url);
+    const audioOnly = !(o.bits & 1);
+    const watch = o.lid
+      ? `<button type="button" class="watch" data-lid="${esc(o.lid)}" aria-expanded="false">${audioOnly ? "♪ Listen to" : "▶ Watch"} the ${o.n.toLocaleString()} ${audioOnly ? (o.feed ? "episodes" : "recordings") : "lectures"}</button><div class="lecbox" hidden></div>`
+      : ytList ? `<a class="watch" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none">▶ Play all lectures on YouTube</a>` : "";
     if (arch) links.push(`<a href="${esc(arch)}" target="_blank" rel="noopener">Archive copy</a>`);
     if (feed) links.push(`<button type="button" data-feed="${esc(feed)}">Copy podcast feed</button>`);
     const meta = [`<span class="inst">${esc(o.inst)}</span>`];
@@ -233,6 +255,7 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
       <div class="meta">${meta.join("")}</div>
       ${o.desc ? `<p class="desc">${esc(o.desc)}</p>` : ""}
       <div class="tags">${fm}${n}${sv}</div>
+      ${watch}
       <div class="links">${links.join("")}</div></li>`;
   }
 
@@ -260,6 +283,66 @@ footer p { max-width: 65ch; margin: 0 0 12px; }
       const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.disabled = true;
     };
     try { navigator.clipboard.writeText(url).then(done, fallback); } catch (_) { fallback(); }
+  }
+
+  // ---------- lecture lists: loaded on demand from lectures/<shard>.json
+  const SHARDS = 128, shardCache = {};
+  function shardOf(s) { let h = 5381; for (const ch of s) h = (Math.imul(h, 33) ^ ch.codePointAt(0)) >>> 0; return h % SHARDS; }
+  function lecturesFor(id) {
+    const k = shardOf(id);
+    shardCache[k] = shardCache[k] || fetch(`lectures/${k}.json`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    return shardCache[k].then((m) => m[id] || []);
+  }
+  // link codes: "y:ID" YouTube, "a:ident" Internet Archive item, else a full URL
+  function media(link) {
+    if (link.startsWith("y:")) { const id = encodeURIComponent(link.slice(2));
+      return { open: "https://www.youtube.com/watch?v=" + id, embed: "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&rel=0", where: "YouTube" }; }
+    if (link.startsWith("a:")) { const id = encodeURIComponent(link.slice(2));
+      return { open: "https://archive.org/details/" + id, embed: "https://archive.org/embed/" + id + "?autoplay=1", where: "Internet Archive" }; }
+    const u = safeUrl(link), path = u.split("?")[0].toLowerCase();
+    if (/\.(mp3|m4a|aac|ogg|oga|opus|wav)$/.test(path)) return { open: u, audio: u, where: "audio file" };
+    if (/\.(mp4|m4v|webm|ogv|mov)$/.test(path)) return { open: u, video: u, where: "video file" };
+    return { open: u, where: "lecture page" };
+  }
+  const SHOW = 60;
+  function lecRow(l, i) {
+    const m = media(l[1]);
+    return `<li data-i="${i}"><button type="button" data-play="${i}">${esc(l[0] || "Lecture " + (i + 1))}</button><a href="${esc(m.open)}" target="_blank" rel="noopener">open</a></li>`;
+  }
+  function onLectures(e) {
+    const btn = e.target.closest("button.watch");
+    const play = e.target.closest("button[data-play]");
+    const all = e.target.closest("button[data-all]");
+    if (btn) {
+      const box = btn.nextElementSibling, open = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", open ? "false" : "true");
+      box.hidden = open;
+      if (open) { const p = box.querySelector(".player"); if (p) p.innerHTML = ""; return; }
+      if (box.dataset.loaded) return;
+      box.innerHTML = '<p class="lecnote">Loading the lecture list…</p>';
+      lecturesFor(btn.dataset.lid).then((list) => {
+        box.dataset.loaded = "1"; box._list = list;
+        if (!list.length) { box.innerHTML = '<p class="lecnote">The lecture list is not available right now. Use the course page link below.</p>'; return; }
+        box.innerHTML = `<div class="player" hidden></div><p class="lecnote">Tap a title to play it here, or "open" to watch on the original site.</p>
+          <ol class="lecs">${list.slice(0, SHOW).map(lecRow).join("")}</ol>` +
+          (list.length > SHOW ? `<button type="button" class="more" data-all="1" style="margin:0">Show all ${list.length.toLocaleString()}</button>` : "");
+      }).catch(() => { box.innerHTML = '<p class="lecnote">The lecture list could not load. Check your connection and try again.</p>'; delete box.dataset.loaded; });
+    } else if (all) {
+      const box = all.closest(".lecbox"); box.querySelector(".lecs").innerHTML = box._list.map(lecRow).join(""); all.remove();
+    } else if (play) {
+      const box = play.closest(".lecbox"), i = +play.dataset.play, l = box._list[i], m = media(l[1]);
+      const p = box.querySelector(".player");
+      box.querySelectorAll(".lecs li.on").forEach((li) => li.classList.remove("on"));
+      play.parentElement.classList.add("on");
+      let el = "";
+      if (m.embed) el = `<iframe src="${esc(m.embed)}" title="${esc(l[0])}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+      else if (m.video) el = `<video src="${esc(m.video)}" controls autoplay preload="metadata" playsinline></video>`;
+      else if (m.audio) el = `<audio src="${esc(m.audio)}" controls autoplay preload="none"></audio>`;
+      else { window.open(m.open, "_blank", "noopener"); return; }
+      p.innerHTML = `<div class="now">${i + 1}. ${esc(l[0])}</div>${el}<div class="alt">Not playing? <a href="${esc(m.open)}" target="_blank" rel="noopener">Open it on the ${m.where === "YouTube" ? "YouTube" : m.where === "Internet Archive" ? "Internet Archive" : "original"} site</a>.</div>`;
+      p.hidden = false;
+      p.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
   }
 
   load();

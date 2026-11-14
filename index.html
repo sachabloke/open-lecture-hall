@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Open Lecture Hall</title>
-<meta name="description" content="Tap a university, walk through its doors into a lecture room and watch every free lecture tumble out.">
+<meta name="description" content="Tap a university, walk through its doors into a lecture room and open any course to play its free lectures.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
@@ -21,8 +21,6 @@
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--ink); font: 15px/1.4 var(--body); }
 [hidden] { display: none !important; }
 canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-canvas.point { cursor: pointer; }
-canvas.grabbing { cursor: grabbing; }
 
 /* ---- gallery ---- */
 #gallery { position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: opacity .45s, transform .45s; }
@@ -51,13 +49,13 @@ canvas.grabbing { cursor: grabbing; }
 .film { position: absolute; top: 10px; left: 10px; z-index: 1; font: 700 11px/1 var(--body); background: var(--chalk); color: #1b1430;
   padding: 6px 9px; border-radius: 999px; }
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
-.tile, .hud button, .btn, input, .pbox button { font: 600 14px/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+.tile, .hud button, .btn, input, select, .pbox button, .hbar button, .bact button { font: 600 14px/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
   border-radius: 999px; padding: 10px 14px; text-decoration: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.tile, .hud button, .pbox button { cursor: pointer; }
+.tile, .hud button, .pbox button, .hbar button, .bact button, select { cursor: pointer; }
 .tile { font-weight: 500; font-size: 13.5px; line-height: 1.2; text-align: left; border-radius: 12px; }
 .tile span { color: var(--muted); margin-left: 6px; font-size: 12px; }
-.tile:hover, .hud button:hover, .btn:hover, .pbox button:hover { border-color: var(--chalk); }
-.hud button:focus-visible, .btn:focus-visible, input:focus-visible, .pbox button:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
+.tile:hover, .hud button:hover, .btn:hover, .pbox button:hover, .hbar button:hover, select:hover { border-color: var(--chalk); }
+.hud button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, .pbox button:focus-visible, .hbar button:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
 input { width: min(320px, 100%); font-weight: 500; flex: 1 1 220px; max-width: 360px; }
 input::placeholder { color: var(--muted); }
 .foot { margin-top: 44px; color: var(--muted); font-size: 13px; max-width: 70ch; }
@@ -74,7 +72,84 @@ input::placeholder { color: var(--muted); }
   transition: opacity .45s; pointer-events: none; touch-action: none; }
 #walk.on { opacity: 1; pointer-events: auto; cursor: ns-resize; }
 
-/* ---- controls over the lecture room ---- */
+/* ---- the lecture hall: a shelf of books over the room ---- */
+#hall { position: fixed; inset: 0; z-index: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: linear-gradient(rgba(8, 10, 30, .3), rgba(8, 10, 30, .62) 300px, rgba(8, 10, 30, .78)); }
+.hbar { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  background: rgba(8, 10, 30, .86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.hname { flex: 1 1 240px; min-width: 0; }
+.hname .eyebrow { margin-bottom: 5px; }
+.hname h1 { font: 800 clamp(19px, 3vw, 28px)/1.1 var(--display); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hname p:last-child { margin: 4px 0 0; color: #cfd5ee; font-size: 13.5px; }
+.htools { display: flex; gap: 8px; flex: 1 1 280px; justify-content: flex-end; flex-wrap: wrap; }
+.htools input { flex: 1 1 160px; max-width: 280px; }
+select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.shelf { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 22px 18px;
+  padding: 24px max(16px, env(safe-area-inset-right)) 90px max(16px, env(safe-area-inset-left)); }
+#cnone { text-align: center; color: #cfd5ee; }
+/* A book: a pale cover texture multiplied with the subject colour, title and lecture count always readable. */
+.bk { position: relative; display: flex; flex-direction: column; aspect-ratio: 3 / 4.1; border: 0; border-radius: 3px 9px 9px 3px;
+  padding: 18px 14px 13px 24px; text-align: left; color: #fff6dc; cursor: pointer; font: inherit; overflow: hidden;
+  background-color: hsl(var(--h) 44% 32%); background-size: 100% 100%; background-blend-mode: multiply;
+  box-shadow: inset 12px 0 14px -10px rgba(0, 0, 0, .65), inset -2px 0 0 rgba(255, 255, 255, .12), 4px 0 0 #e7dcc0, 5px 0 0 #b9ad8e, 0 12px 24px rgba(0, 0, 0, .55);
+  transition: transform .22s cubic-bezier(.2, .7, .2, 1); }
+.bk.c1 { background-image: url(media/books/cover1.jpg); }
+.bk.c2 { background-image: url(media/books/cover2.jpg); }
+.bk::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: rgba(0, 0, 0, .3); box-shadow: 1px 0 0 rgba(255, 255, 255, .14); }
+.bk:hover, .bk:focus-visible { transform: translateY(-7px) rotate(-1.2deg); }
+.bk:focus-visible { outline: 3px solid var(--chalk); outline-offset: 3px; }
+.bk b { font: 700 15.5px/1.22 Georgia, "Iowan Old Style", "Times New Roman", serif; text-shadow: 0 1px 2px rgba(0, 0, 0, .65);
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.bk i { margin-top: 8px; font: 500 12px/1.25 var(--body); font-style: normal; color: #f0e3c2; text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bk em { margin-top: auto; align-self: flex-start; font: 700 12px/1 var(--body); font-style: normal; color: #ffe9a8;
+  background: rgba(0, 0, 0, .42); border: 1px solid rgba(243, 198, 77, .75); padding: 6px 9px; border-radius: 999px; white-space: nowrap; }
+
+/* ---- an open book: the course on the left page, its lectures listed on the right ---- */
+#bookwrap { position: fixed; inset: 0; z-index: 5; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; padding: 14px; background: rgba(5, 7, 22, .74); }
+#book { position: relative; width: min(1000px, 100%); height: min(700px, 100%); display: grid; grid-template: minmax(0, 1fr) / 1fr 1.3fr;
+  padding: 10px; border-radius: 12px; background: hsl(var(--h, 222) 44% 24%); box-shadow: 0 30px 90px rgba(0, 0, 0, .7); }
+.page { background: #fbf5e4; color: #2a2116; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+.page.left { border-radius: 5px 0 0 5px; padding: 30px 28px 24px; box-shadow: inset -22px 0 26px -18px rgba(60, 40, 10, .45); }
+.page.right { border-radius: 0 5px 5px 0; padding: 0 12px 18px 22px; box-shadow: inset 22px 0 26px -18px rgba(60, 40, 10, .45); }
+.rhead { position: sticky; top: 0; z-index: 1; margin: 0; padding: 22px 56px 12px 4px; background: linear-gradient(#fbf5e4 80%, rgba(251, 245, 228, 0));
+  font: 700 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: #8a6a2a; }
+#buni { font: 700 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: #8a6a2a; margin: 0 0 10px; padding-right: 30px; }
+#btitle { font: 700 clamp(22px, 3vw, 31px)/1.14 Georgia, "Iowan Old Style", "Times New Roman", serif; margin: 0 0 10px; text-wrap: balance; }
+#bwho { margin: 0 0 14px; color: #5b4a2c; font-size: 14.5px; }
+#bdesc { margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: #3a2f1e; }
+#bcount { margin: 0 0 14px; font-weight: 700; font-size: 15px; }
+.bact { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.bact button { background: #2550b8; color: #fff; border-color: transparent; font-size: 15px; padding: 12px 16px; }
+.bact a { color: #2550b8; font-weight: 600; font-size: 14.5px; }
+#blist { list-style: none; margin: 0; padding: 0; }
+#blist button { display: grid; grid-template-columns: 2.3em 1fr auto; gap: 10px; align-items: baseline; width: 100%; text-align: left;
+  padding: 12px 10px 12px 4px; border: 0; border-bottom: 1px solid #e3d8ba; background: transparent; color: #2a2116; cursor: pointer;
+  font: 500 15.5px/1.32 var(--body); }
+#blist button:hover, #blist button:focus-visible { background: #f1e6c6; outline: none; }
+#blist .num { color: #8a6a2a; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+#blist .ico { color: #2550b8; font-size: 14px; }
+#blist li.played .ico { color: #1f7a55; }
+#blist li.now button { background: #e9dcb4; font-weight: 700; }
+#bnote { margin: 30px 12px; font-size: 16px; line-height: 1.5; }
+#bnote a { color: #2550b8; font-weight: 700; }
+#bclose { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #b9a878; background: #efe3c3;
+  color: #2a2116; font: 700 17px/1 var(--body); cursor: pointer; z-index: 3; }
+#bclose:hover, #bclose:focus-visible { background: #f1e6c6; outline: 2px solid #2550b8; }
+@media (max-width: 720px) {
+  #bookwrap { padding: 8px; }
+  #book { grid-template: auto minmax(0, 1fr) / minmax(0, 1fr); height: 100%; padding: 7px; }
+  .page.left { border-radius: 5px 5px 0 0; padding: 20px 18px 14px; box-shadow: none; border-bottom: 1px solid #e3d8ba; max-height: 46vh; }
+  .page.right { border-radius: 0 0 5px 5px; padding: 0 8px 14px 10px; box-shadow: none; }
+  .rhead { padding: 14px 4px 10px; }
+  #bdesc { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  #btitle { font-size: 21px; }
+}
+
+/* ---- controls over the walk-in ---- */
 .hud { position: fixed; z-index: 4; top: 0; left: 0; right: 0; display: flex; gap: 12px 16px; align-items: flex-start; flex-wrap: wrap;
   padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 30px max(16px, env(safe-area-inset-left));
   background: linear-gradient(rgba(8, 10, 30, .9), rgba(8, 10, 30, .5) 62%, transparent); pointer-events: none; }
@@ -85,14 +160,9 @@ input::placeholder { color: var(--muted); }
 #sub { margin: 6px 0 0; color: #cfd5ee; font-size: 13.5px; }
 #sub a { color: var(--chalk); pointer-events: auto; }
 .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-#more { background: var(--chalk); color: #1b1430; border-color: transparent; }
 #hint { position: fixed; z-index: 4; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); margin: 0; text-align: center;
   font-size: 13px; pointer-events: none; transition: opacity .4s; padding: 0 16px; opacity: 0; }
 #hint span { display: inline-block; padding: 7px 14px; border-radius: 999px; background: rgba(11, 16, 48, .82); color: var(--ink); border: 1px solid var(--line); }
-#tip { position: fixed; z-index: 5; max-width: 280px; padding: 8px 10px; border-radius: 8px; background: #fff; color: #16213a;
-  font-size: 13px; line-height: 1.3; pointer-events: none; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); }
-#tip b { display: block; font-weight: 700; }
-#tip span { color: #5a6582; }
 #player { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; background: rgba(5, 7, 22, .8); }
 .pbox { width: min(920px, 100%); background: #131937; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
   box-shadow: 0 24px 80px rgba(0, 0, 0, .6); }
@@ -106,11 +176,13 @@ input::placeholder { color: var(--muted); }
 .pfoot a { color: var(--chalk); font-weight: 600; font-size: 14px; }
 @media (max-width: 560px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .shelf { grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
+  .bk b { font-size: 14.5px; }
   .ucard.hero { min-height: 200px; }
   .ulabel b { font-size: 14.5px; } .ulabel span { font-size: 11.5px; }
   .hud { gap: 8px; } .hud button, .btn, input, .pbox button { padding: 9px 12px; font-size: 13px; }
 }
-@media (prefers-reduced-motion: reduce) { .ucard img, #gallery { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ucard img, #gallery, .bk { transition: none; } }
 </style>
 </head>
 <body>
@@ -142,20 +214,48 @@ input::placeholder { color: var(--muted); }
 <video id="walk" muted playsinline preload="none" aria-label="A walk through the university gate and into its lecture hall"></video>
 
 <header class="hud" id="hud" hidden>
-  <button type="button" id="back">← Universities</button>
   <div class="where">
     <p class="eyebrow" id="eyebrow"></p>
     <h1 id="title"></h1>
-    <p id="sub"></p>
   </div>
   <div class="tools">
-    <button type="button" id="more" hidden>Pour more</button>
     <button type="button" id="skip" hidden>Skip the walk ›</button>
-    <a class="btn" href="list.html">List view</a>
   </div>
 </header>
 <p id="hint"><span id="hintText"></span></p>
-<div id="tip" hidden></div>
+
+<section id="hall" hidden aria-label="Courses at this university">
+  <div class="hbar">
+    <button type="button" id="hback">← Universities</button>
+    <div class="hname"><p class="eyebrow" id="hrank"></p><h1 id="hname"></h1><p id="hsub"></p></div>
+    <div class="htools">
+      <input id="cq" type="search" placeholder="Find a course…" aria-label="Find a course" autocomplete="off">
+      <select id="csub" aria-label="Subject"></select>
+    </div>
+  </div>
+  <div class="shelf" id="shelf"></div>
+  <p id="cnone" hidden>No course matches that.</p>
+</section>
+
+<div id="bookwrap" hidden>
+  <article id="book" role="dialog" aria-modal="true" aria-labelledby="btitle">
+    <button type="button" id="bclose" aria-label="Close this book">✕</button>
+    <div class="page left">
+      <p id="buni"></p>
+      <h2 id="btitle"></h2>
+      <p id="bwho"></p>
+      <p id="bdesc"></p>
+      <p id="bcount"></p>
+      <div class="bact"><button type="button" id="bplay" hidden>▶ Play from the start</button><a id="bpage" target="_blank" rel="noopener">Course page ↗</a></div>
+    </div>
+    <div class="page right" id="bookright">
+      <p class="rhead" id="rhead">Lectures</p>
+      <ol id="blist"></ol>
+      <p id="bnote" hidden></p>
+    </div>
+  </article>
+</div>
+
 <div id="player" hidden role="dialog" aria-modal="true" aria-label="Lecture player">
   <div class="pbox">
     <div class="phead"><p id="ptitle"></p><button type="button" id="pclose" aria-label="Close player">✕</button></div>
@@ -163,21 +263,16 @@ input::placeholder { color: var(--muted); }
     <div class="pfoot"><button type="button" id="pprev">← Previous</button><a id="popen" target="_blank" rel="noopener"></a><button type="button" id="pnext">Next →</button></div>
   </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <script>
 (() => {
   "use strict";
-  const { Engine, Bodies, Body, Composite, Constraint, Query, Sleeping } = Matter;
   const $ = (id) => document.getElementById(id);
   const cv = $("c"), ctx = cv.getContext("2d");
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const DISPLAY = '"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif';
-  const BODY = '-apple-system, "Segoe UI", Roboto, "Noto Sans", system-ui, sans-serif';
-  const SERIF = 'Georgia, "Iowan Old Style", "Times New Roman", serif';
-  const CHALK = "#f3c64d";
   const HUES = [330, 150, 28, 190, 222, 45, 280, 205, 120, 12, 262, 0, 240, 300, 250, 170, 85, 215];
   const SHARDS = 128;
-  let W = 0, H = 0, DPR = 1, T = 0;
+  let W = 0, H = 0, DPR = 1, T = 0, painted = null;
 
   // Universities with a picture: [file name, lecture room, how far down the picture the doors are (0-1), film].
   // A room is one of media/rooms/<room>.jpg. A film is a walk-in clip that ends on that room.
@@ -197,12 +292,9 @@ input::placeholder { color: var(--muted); }
     "IISc Bangalore": ["iisc", "modern", .74], "IIT Delhi": ["iitd", "modern", .69], "IIT Hyderabad": ["iith", "modern", .68],
     "IIT-ISM Dhanbad": ["iitism", "modern", .74], "UC Irvine": ["uci", "classical", .67], "IIT (BHU) Varanasi": ["bhu", "modern", .74],
   };
-  const BOOK_ART = ["media/books/b1.png", "media/books/b2.png", "media/books/b3.png"];
 
   // ---------- small helpers ----------
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   function hash(s) { let h = 5381; for (const ch of s) h = (Math.imul(h, 33) ^ ch.codePointAt(0)) >>> 0; return h; }
   function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
@@ -212,24 +304,6 @@ input::placeholder { color: var(--muted); }
   const num = (n) => n.toLocaleString();
   const fold = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   function loadImg(src) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
-  function fit(text, maxW) { // shorten text to a pixel width with the current ctx.font
-    if (ctx.measureText(text).width <= maxW) return text;
-    let lo = 0, hi = text.length;
-    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ctx.measureText(text.slice(0, m) + "…").width <= maxW) lo = m; else hi = m - 1; }
-    return text.slice(0, lo).trimEnd() + "…";
-  }
-  function wrap(text, maxW, maxLines) {
-    const words = text.split(/\s+/), lines = []; let cur = "";
-    for (const w of words) {
-      const t = cur ? cur + " " + w : w;
-      if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
-      if (lines.length === maxLines) break;
-    }
-    if (lines.length < maxLines && cur) lines.push(cur);
-    if (lines.length === maxLines) { const used = lines.join(" ").length; if (used < text.length - 1) lines[maxLines - 1] = fit(lines[maxLines - 1] + " …", maxW); }
-    return lines.map((l) => fit(l, maxW));
-  }
-  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 
   // ---------- data ----------
   let data = null, unis = [];
@@ -259,7 +333,7 @@ input::placeholder { color: var(--muted); }
       if (/^(unknown|various|multiple|multi-)/i.test(name)) return;
       let u = m.get(name);
       if (!u) m.set(name, u = { name, rank: r[13] || 4, courses: [], nLect: 0 });
-      const c = { title: r[0], who: r[2], subj: r[3], year: r[4], bits: r[5], n: r[6] || 0, url: r[7], feed: r[9], lid: r[12] || "" };
+      const c = { title: r[0], who: r[2], subj: r[3], year: r[4], bits: r[5], n: r[6] || 0, url: r[7], feed: r[9], desc: r[10] || "", lid: r[12] || "" };
       u.courses.push(c); u.nLect += c.n || 1;
     });
     unis = [...m.values()].sort((a, b) => b.nLect - a.nLect);
@@ -322,24 +396,17 @@ input::placeholder { color: var(--muted); }
 
   // ---------- scene state ----------
   let state = "load";                       // load | gallery | enter | walk | hall | book
-  let cur = { u: null, start: 0, course: null, lectures: null, lstart: 0, book: null };
-  let hoverBody = null;
-  const tweens = [];
-  function tween(ms, fn, done) { tweens.push({ t0: performance.now(), ms: reduce ? 1 : ms, fn, done }); }
+  let cur = { u: null, course: null, lectures: null };
   let hintTimer = 0;
   function hint(text) { // show a hint, then let it fade so it never sits on the pile
     $("hintText").textContent = text; $("hint").style.opacity = 1;
     clearTimeout(hintTimer); hintTimer = setTimeout(() => { $("hint").style.opacity = 0; }, 6000);
   }
-  function setHud(eyebrow, title, sub, back, more) {
-    $("hud").hidden = false;
-    $("eyebrow").textContent = eyebrow; $("title").textContent = title; $("sub").innerHTML = sub;
-    $("back").hidden = !back; if (back) $("back").textContent = back;
-    $("more").hidden = !more; if (more) $("more").textContent = more;
-  }
+  function setHud(eyebrow, title) { $("hud").hidden = false; $("eyebrow").textContent = eyebrow; $("title").textContent = title; }
   function toGallery() {
-    closePlayer(); clearBodies(true); cur.book = null; cur.u = null; state = "gallery";
-    $("hud").hidden = true; $("hint").style.opacity = 0; $("tip").hidden = true; cv.classList.remove("point");
+    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelf").innerHTML = "";
+    cur.u = null; cur.course = null; cur.lectures = null; state = "gallery";
+    $("hud").hidden = true; $("hint").style.opacity = 0;
     $("gallery").classList.remove("away");
     history.replaceState(null, "", location.pathname + location.search);
   }
@@ -352,14 +419,14 @@ input::placeholder { color: var(--muted); }
   }
   async function enter(u, fromCard) {
     if (state !== "gallery") return;
-    state = "enter"; cur.u = u; cur.start = 0; $("q").blur();
+    state = "enter"; cur.u = u; $("q").blur();
     history.replaceState(null, "", "#" + encodeURIComponent(u.name));
     const roomP = u.roomImg ? Promise.resolve(u.roomImg) : loadImg(u.roomSrc).then((img) => (u.roomImg = img));
     const film = u.pic && u.pic.walk && !reduce;
     if (film) { const v = $("walk"); if (v.getAttribute("src") !== u.pic.walk) { v.src = u.pic.walk; v.load(); } }
     const r = fromCard ? fromCard.getBoundingClientRect() : { left: W * .3, top: H * .3, width: W * .4, height: H * .4 };
     $("gallery").classList.add("away");
-    setHud("You are walking into", u.name, "", "", "");
+    setHud("You are walking into", u.name);
     resetStage();
     Object.assign(sbox.style, { left: "0", top: "0", width: "100%", height: "100%", borderRadius: "0" });
     stage.hidden = false;
@@ -405,7 +472,12 @@ input::placeholder { color: var(--muted); }
     if (cur.u !== u) return;
     arriveHall(); requestAnimationFrame(() => requestAnimationFrame(resetStage));
   }
-  function arriveHall() { state = "hall"; hallHud(); startWorld(); pourBooks(); }
+  function arriveHall() {
+    state = "hall"; $("hud").hidden = true; $("hint").style.opacity = 0;
+    buildShelf(cur.u);
+    const hall = $("hall"); hall.hidden = false; hall.scrollTop = 0;
+    if (!reduce) { hall.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" }); flyIn(); }
+  }
 
   // The filmed walk-in. Dragging up or right walks forward, down or left walks back.
   let walkFinish = null;
@@ -434,117 +506,93 @@ input::placeholder { color: var(--muted); }
     $("skip").onclick = () => walkFinish && walkFinish();
   })();
 
-  function hallHud() {
-    const u = cur.u, cap = bookCap(), a = cur.start + 1, b = Math.min(u.courses.length, cur.start + cap);
-    const band = u.rank === 1 ? "World top 25 · " : u.rank === 2 ? "World top 100 · " : "";
-    setHud(band + "lecture hall", u.name,
-      `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} · ${num(u.nLect)} lectures` +
-      (u.courses.length > cap ? ` · showing ${num(a)}–${num(b)}` : ""),
-      "← Universities", u.courses.length > cap ? "Pour the next shelf" : "");
-    hint("Each book is a course. Tap one to shake out its lectures.");
-  }
-  function bookHud() {
-    const c = cur.course, L = cur.lectures || [], cap = cardCap();
-    const bits = [];
-    if (c.who) bits.push(esc(c.who));
-    if (L.length) bits.push(`${num(L.length)} ${c.bits & 1 ? "lectures" : "recordings"}` + (L.length > cap ? ` · showing ${cur.lstart + 1}–${Math.min(L.length, cur.lstart + cap)}` : ""));
-    bits.push(`<a href="${esc(safeUrl(c.url))}" target="_blank" rel="noopener">Course page ↗</a>`);
-    setHud(cur.u.name, c.title, bits.join(" · "), "← All courses", L.length > cap ? "More lectures" : "");
-    hint(L.length ? "Tap a lecture to play it" : "This course keeps its lectures on its own page");
-  }
-
-  // ---------- physics ----------
-  let engine = null, walls = [], bodies = [], spawnQ = [], drag = null;
-  function startWorld() {
-    engine = Engine.create({ enableSleeping: true });
-    engine.gravity.y = 1;
-    walls = [0, 1, 2].map(() => Bodies.rectangle(0, 0, 10, 10, { isStatic: true }));
-    Composite.add(engine.world, walls); placeWalls();
-  }
-  function placeWalls() {
-    if (!engine) return;
-    const set = (b, x, y, w, h) => { Body.setVertices(b, [{ x: x - w / 2, y: y - h / 2 }, { x: x + w / 2, y: y - h / 2 }, { x: x + w / 2, y: y + h / 2 }, { x: x - w / 2, y: y + h / 2 }]); Body.setPosition(b, { x, y }); };
-    set(walls[0], W / 2, H + 60, W * 3, 120); set(walls[1], -60, H / 2 - H, 120, H * 5); set(walls[2], W + 60, H / 2 - H, 120, H * 5);
-    bodies.forEach((b) => Sleeping.set(b, false));
-  }
-  function clearBodies(all) {
-    spawnQ = []; drag = null; hoverBody = null;
-    if (!engine) return;
-    bodies.forEach((b) => Composite.remove(engine.world, b)); bodies = [];
-    if (all) engine = null;
-  }
-  const bookCap = () => clamp(Math.floor(.27 * W * H / (160 * 40)), 10, 60);
-  const cardCap = () => clamp(Math.floor(.36 * W * (H - bookY()) / (104 * 50)), 10, 70);
-  const bookY = () => Math.max(170, H * .3);
-
-  function pourBooks() {
-    const u = cur.u, list = u.courses.slice(cur.start, cur.start + bookCap());
-    clearBodies(false);
-    list.forEach((c, i) => spawnQ.push({ at: T + 250 + i * 60, kind: "book", c }));
-  }
-  function spawn(q) {
-    const r = Math.random, small = W < 560;
-    if (q.kind === "book") { // books burst out of the blackboard in the middle of the room
-      const c = q.c;
-      ctx.font = `600 12px ${SERIF}`;
-      const w = clamp(ctx.measureText(c.title).width + 58, 110, small ? 168 : 224), h = 30 + Math.min(14, Math.sqrt(c.n || 1) * 1.5);
-      const b = Bodies.rectangle(W / 2 + (r() - .5) * Math.min(W * .3, 260), H * .4, w, h, { chamfer: { radius: 5 }, restitution: .2, friction: .7, frictionAir: .012, density: .002 });
-      Body.setAngle(b, (r() - .5) * 1.2);
-      Body.setVelocity(b, { x: (r() - .5) * 2 * (5 + W / 150), y: -(3 + r() * 7) });
-      Body.setAngularVelocity(b, (r() - .5) * .3);
-      b.item = { kind: "book", c, w, h, hue: HUES[c.subj % HUES.length], art: hash(c.title) % BOOK_ART.length, label: fit(c.title, w - 50) };
-      bodies.push(b); Composite.add(engine.world, b);
-    } else {
-      const bk = cur.book, w = 104, h = 50;
-      const b = Bodies.rectangle(bk.x + (r() - .5) * bk.w * .5, bk.y + bk.w * .14, w, h, { chamfer: { radius: 5 }, restitution: .25, friction: .6, frictionAir: .02, density: .0012 });
-      Body.setAngle(b, (r() - .5) * 1.4);
-      Body.setVelocity(b, { x: (r() - .5) * 2 * (3 + W / 260), y: 1 + r() * 3 });
-      Body.setAngularVelocity(b, (r() - .5) * .35);
-      ctx.font = `600 10.5px ${BODY}`;
-      b.item = { kind: "card", i: q.i, w, h, lines: wrap(q.title, w - 16, 2), tag: q.tag, played: false, gold: q.gold };
-      bodies.push(b); Composite.add(engine.world, b);
-    }
-  }
-
-  function openBook(body) {
-    const it = body.item, c = it.c;
-    state = "book"; cur.course = c; cur.lectures = null; cur.lstart = 0; $("tip").hidden = true; hoverBody = null;
-    if (drag) { Composite.remove(engine.world, drag.c); drag = null; }
-    spawnQ = [];
-    Composite.remove(engine.world, body); bodies = bodies.filter((b) => b !== body);
-    // the floor opens under every other book
-    bodies.forEach((b) => { b.collisionFilter.mask = 0; b.item.falling = true; Sleeping.set(b, false); Body.setVelocity(b, { x: (Math.random() - .5) * 6, y: -2 - Math.random() * 3 }); });
-    const bk = cur.book = { x: body.position.x, y: body.position.y, a: body.angle, w: it.w, hue: it.hue, art: it.art, open: 0, title: c.title, shake: 0 };
-    const x0 = bk.x, y0 = bk.y, a0 = bk.a, w0 = bk.w, w1 = Math.min(320, W * .66);
-    tween(650, (t) => { const e = ease(t); bk.x = lerp(x0, W / 2, e); bk.y = lerp(y0, bookY(), e) - Math.sin(t * Math.PI) * 60; bk.a = a0 * (1 - e); bk.w = lerp(w0, w1, e); bk.open = clamp((t - .6) / .4, 0, 1); },
-      () => { bk.ready = true; pourCards(); });
-    setHud(cur.u.name, c.title, "Opening…", "← All courses", "");
-    const p = c.lid ? lecturesFor(c.lid).catch(() => []) : Promise.resolve([]);
-    p.then((L) => { if (cur.course !== c) return; cur.lectures = L; bookHud(); pourCards(); });
-  }
-  function pourCards() {
-    const bk = cur.book, L = cur.lectures, c = cur.course;
-    if (!bk || !bk.ready || !L || state !== "book") return;
-    bodies.filter((b) => b.item.kind === "card").forEach((b) => { b.collisionFilter.mask = 0; b.item.falling = true; Sleeping.set(b, false); });
-    bk.shake = T + 400 + Math.min(L.length, cardCap()) * 70;
-    if (!L.length) { spawnQ.push({ at: T + 200, kind: "card", i: -1, title: "Open the course page", tag: "↗", gold: true }); return; }
+  // ---------- the lecture hall: every course is a book on the shelf ----------
+  function lecturesLabel(c) {
+    if (!c.lid) return "↗ Course page";
     const audio = !(c.bits & 1);
-    L.slice(cur.lstart, cur.lstart + cardCap()).forEach((l, k) => {
-      const i = cur.lstart + k;
-      spawnQ.push({ at: T + 150 + k * 70, kind: "card", i, title: cardTitle(l[0], i), tag: (audio ? "♪ " : "▶ ") + (i + 1) });
+    return `${audio ? "♪" : "▶"} ${num(c.n)} ${audio ? (c.n === 1 ? "recording" : "recordings") : (c.n === 1 ? "lecture" : "lectures")}`;
+  }
+  function buildShelf(u) {
+    const band = u.rank === 1 ? "World top 25 · " : u.rank === 2 ? "World top 100 · " : "";
+    $("hrank").textContent = band + "lecture hall";
+    $("hname").textContent = u.name;
+    $("hsub").textContent = `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} · ${num(u.nLect)} lectures. Tap a book to open it.`;
+    const counts = new Map(); u.courses.forEach((c) => counts.set(c.subj, (counts.get(c.subj) || 0) + 1));
+    $("csub").innerHTML = `<option value="">All subjects (${num(u.courses.length)})</option>` +
+      [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => `<option value="${s}">${esc(data.subjects[s])} (${num(n)})</option>`).join("");
+    $("csub").hidden = counts.size < 2; $("cq").value = ""; $("cq").hidden = u.courses.length < 9;
+    $("shelf").innerHTML = u.courses.map((c, i) =>
+      `<button type="button" class="bk c${hash(c.title) % 2 + 1}" style="--h:${HUES[c.subj % HUES.length]}" data-i="${i}" data-s="${c.subj}" data-k="${esc(fold(c.title + " " + c.who))}">` +
+      `<b>${esc(c.title)}</b>${c.who ? `<i>${esc(c.who)}</i>` : ""}<em>${lecturesLabel(c)}</em></button>`).join("");
+    $("cnone").hidden = true;
+  }
+  function flyIn() { // the first books burst out of the blackboard and land in their places on the shelf
+    const ox = W / 2, oy = H * .42;
+    [...$("shelf").children].slice(0, 30).forEach((el, i) => {
+      const r = el.getBoundingClientRect(); if (r.top > H) return;
+      const dx = ox - (r.left + r.width / 2), dy = oy - (r.top + r.height / 2), rot = (Math.random() - .5) * 90;
+      el.animate([{ transform: `translate(${dx}px, ${dy}px) scale(.12) rotate(${rot}deg)`, opacity: 0 }, { opacity: 1, offset: .3 }, { transform: "none", opacity: 1 }],
+        { duration: 750, delay: 250 + i * 40, easing: "cubic-bezier(.2,.8,.25,1)", fill: "backwards" });
     });
   }
-  function cardTitle(t, i) { // the card already shows its number, so drop a leading "Lecture 12:"
-    const s = (t || "").replace(/^\s*(lecture|lec|episode|session|class)\s*\.?\s*#?\d+\s*(·|[:.\-–—|])?\s*/i, "").trim();
+  function filterShelf() {
+    const q = fold($("cq").value.trim()), s = $("csub").value; let n = 0;
+    for (const el of $("shelf").children) { const ok = (!q || el.dataset.k.includes(q)) && (!s || el.dataset.s === s); el.hidden = !ok; if (ok) n++; }
+    $("cnone").hidden = n > 0;
+  }
+  $("cq").addEventListener("input", filterShelf); $("csub").addEventListener("change", filterShelf);
+  $("shelf").addEventListener("click", (e) => { const el = e.target.closest(".bk"); if (el && state === "hall") openBook(cur.u.courses[+el.dataset.i], el); });
+
+  // ---------- an open book: the course on the left page, its lectures listed on the right ----------
+  function lectureTitle(t, i) { // the row already shows its number, so drop a leading "Lecture 12:"
+    const s = (t || "").replace(/^\s*(lecture|lec|episode|session|class)\s*\.?\s*#?\d+\s*(·|[:.\-–—|_])?\s*/i, "").replace(/^[\s_]+/, "").trim();
     return s || t || "Lecture " + (i + 1);
   }
-  function backToBooks() { state = "hall"; cur.book = null; cur.course = null; clearBodies(false); hallHud(); pourBooks(); }
+  function openBook(c, fromEl) {
+    state = "book"; cur.course = c; cur.lectures = null;
+    $("book").style.setProperty("--h", HUES[c.subj % HUES.length]);
+    $("buni").textContent = cur.u.name;
+    $("btitle").textContent = c.title;
+    $("bwho").textContent = [c.who, data.subjects[c.subj], c.year].filter(Boolean).join(" · ");
+    $("bdesc").textContent = c.desc;
+    $("bpage").href = safeUrl(c.url);
+    $("bplay").hidden = true; $("bcount").textContent = c.lid ? "Finding the lectures…" : "";
+    $("blist").innerHTML = ""; $("bnote").hidden = true; $("rhead").textContent = c.lid ? "Lectures" : "";
+    $("bookwrap").hidden = false; $("bookright").scrollTop = 0;
+    if (!reduce) {
+      const b = $("book").getBoundingClientRect(), r = fromEl ? fromEl.getBoundingClientRect() : b;
+      const dx = r.left + r.width / 2 - (b.left + b.width / 2), dy = r.top + r.height / 2 - (b.top + b.height / 2);
+      $("book").animate([{ transform: `translate(${dx}px, ${dy}px) scale(${Math.max(.12, r.width / b.width)})`, opacity: .4 }, { transform: "none", opacity: 1 }],
+        { duration: 420, easing: "cubic-bezier(.2,.8,.25,1)" });
+    }
+    $("bclose").focus();
+    (c.lid ? lecturesFor(c.lid).catch(() => []) : Promise.resolve([])).then((L) => {
+      if (cur.course !== c) return;
+      cur.lectures = L;
+      const audio = !(c.bits & 1);
+      if (!L.length) {
+        $("bcount").textContent = "";
+        $("bnote").hidden = false;
+        $("bnote").innerHTML = `This course keeps its lectures on its own page.<br><a href="${esc(safeUrl(c.url))}" target="_blank" rel="noopener">Open the course page ↗</a>`;
+        return;
+      }
+      $("bcount").textContent = `${num(L.length)} ${audio ? (L.length === 1 ? "recording" : "recordings") : (L.length === 1 ? "lecture" : "lectures")}. Tap one to play it.`;
+      $("rhead").textContent = audio ? "Recordings" : "Lectures";
+      $("bplay").hidden = false; $("bplay").textContent = audio ? "♪ Play from the start" : "▶ Play from the start";
+      $("blist").innerHTML = L.map((l, i) => `<li><button type="button" data-i="${i}"><span class="num">${i + 1}</span><span>${esc(lectureTitle(l[0], i))}</span><span class="ico">${audio ? "♪" : "▶"}</span></button></li>`).join("");
+    });
+  }
+  function closeBook() { $("bookwrap").hidden = true; cur.course = null; cur.lectures = null; state = "hall"; }
+  $("blist").addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) play(+b.dataset.i); });
+  $("bplay").onclick = () => play(0);
+  $("bclose").onclick = closeBook;
+  $("bookwrap").addEventListener("click", (e) => { if (e.target === $("bookwrap")) closeBook(); });
 
   // ---------- player ----------
   let playing = -1;
   function play(i) {
-    const L = cur.lectures, c = cur.course;
-    if (i < 0 || !L || !L[i]) { window.open(safeUrl(c.url), "_blank", "noopener"); return; }
+    const L = cur.lectures;
+    if (!L || !L[i]) return;
     playing = i;
     const m = media(L[i][1]), title = L[i][0] || "Lecture " + (i + 1);
     $("ptitle").textContent = `${i + 1}. ${title}`;
@@ -557,7 +605,9 @@ input::placeholder { color: var(--muted); }
     else { el = document.createElement("p"); el.innerHTML = `This lecture lives on its own page. <a href="${esc(m.open)}" target="_blank" rel="noopener" style="color:#f3c64d">Open it ↗</a>`; }
     box.appendChild(el);
     $("player").hidden = false; $("pclose").focus();
-    bodies.forEach((b) => { if (b.item.kind === "card" && b.item.i === i) b.item.played = true; });
+    [...$("blist").children].forEach((li, k) => li.classList.toggle("now", k === i));
+    const li = $("blist").children[i];
+    if (li) { li.classList.add("played"); li.querySelector(".ico").textContent = "✓"; li.scrollIntoView({ block: "nearest" }); }
   }
   function closePlayer() { $("pmedia").innerHTML = ""; $("player").hidden = true; playing = -1; }
   $("pclose").onclick = closePlayer;
@@ -569,56 +619,10 @@ input::placeholder { color: var(--muted); }
   function goBack() {
     if (!$("player").hidden) return closePlayer();
     if (state === "walk") { if (walkFinish) walkFinish(); return; }
-    if (state === "book") backToBooks(); else if (state === "hall") toGallery();
+    if (state === "book") closeBook(); else if (state === "hall") toGallery();
   }
-  $("back").onclick = goBack;
-  $("more").onclick = () => {
-    if (state === "hall") { cur.start += bookCap(); if (cur.start >= cur.u.courses.length) cur.start = 0; hallHud(); pourBooks(); }
-    else if (state === "book" && cur.lectures) { cur.lstart += cardCap(); if (cur.lstart >= cur.lectures.length) cur.lstart = 0; bookHud(); pourCards(); }
-  };
+  $("hback").onclick = goBack;
   addEventListener("keydown", (e) => { if (e.key === "Escape") goBack(); });
-
-  const p = { down: false, x: 0, y: 0, sx: 0, sy: 0, moved: 0 };
-  const bodyAt = (x, y) => { const hit = Query.point(bodies.filter((b) => !b.item.falling), { x, y }); return hit.length ? hit[hit.length - 1] : null; };
-  cv.addEventListener("pointerdown", (e) => {
-    cv.setPointerCapture(e.pointerId);
-    p.down = true; p.x = p.sx = e.clientX; p.y = p.sy = e.clientY; p.moved = 0;
-    if ((state === "hall" || state === "book") && engine) {
-      const b = bodyAt(p.x, p.y);
-      if (b) { Sleeping.set(b, false);
-        drag = { body: b, c: Constraint.create({ pointA: { x: p.x, y: p.y }, bodyB: b, pointB: { x: p.x - b.position.x, y: p.y - b.position.y }, length: 0, stiffness: .14, damping: .12 }) };
-        Composite.add(engine.world, drag.c); cv.classList.add("grabbing"); }
-    }
-  });
-  cv.addEventListener("pointermove", (e) => {
-    p.x = e.clientX; p.y = e.clientY;
-    if (p.down) {
-      p.moved = Math.max(p.moved, Math.hypot(p.x - p.sx, p.y - p.sy));
-      if (drag) { drag.c.pointA = { x: p.x, y: p.y }; Sleeping.set(drag.body, false); }
-      return;
-    }
-    if (e.pointerType !== "mouse" || !(state === "hall" || state === "book")) return;
-    hoverBody = engine ? bodyAt(p.x, p.y) : null; cv.classList.toggle("point", !!hoverBody);
-    const tip = $("tip");
-    if (hoverBody && hoverBody.item.kind === "book") {
-      const c = hoverBody.item.c;
-      tip.innerHTML = `<b>${esc(c.title)}</b><span>${esc([c.who, data.subjects[c.subj], c.year, c.n ? num(c.n) + " lectures" : ""].filter(Boolean).join(" · "))}</span>`;
-      tip.hidden = false; tip.style.left = Math.min(p.x + 14, W - 296) + "px"; tip.style.top = Math.min(p.y + 16, H - 90) + "px";
-    } else if (hoverBody && hoverBody.item.i >= 0 && cur.lectures) {
-      const l = cur.lectures[hoverBody.item.i];
-      tip.innerHTML = `<b>${esc((hoverBody.item.i + 1) + ". " + (l[0] || "Lecture"))}</b>`;
-      tip.hidden = false; tip.style.left = Math.min(p.x + 14, W - 296) + "px"; tip.style.top = Math.min(p.y + 16, H - 60) + "px";
-    } else tip.hidden = true;
-  });
-  function up() {
-    if (!p.down) return; p.down = false; cv.classList.remove("grabbing");
-    const tap = p.moved < 8, b = drag && drag.body;
-    if (drag) { Composite.remove(engine.world, drag.c); drag = null; }
-    if (!tap) return;
-    if (state === "hall" && b && b.item.kind === "book") openBook(b);
-    else if (state === "book" && b && b.item.kind === "card") play(b.item.i);
-  }
-  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 
   // ---------- drawing: night sky behind the gallery ----------
   const stars = (() => { const r = rng(7); return Array.from({ length: 190 }, () => ({ x: r(), y: r(), s: .5 + r() * 1.3, p: r() * 6.28 })); })();
@@ -632,133 +636,23 @@ input::placeholder { color: var(--muted); }
     }
   }
 
-  // ---------- drawing: books ----------
-  // Book artwork is a pale leather spine photographed side-on. It is trimmed to its outline once, then tinted
-  // per subject colour and cached. Until the artwork loads (or if it fails) books are drawn by hand instead.
-  const art = BOOK_ART.map(() => null), tintCache = new Map();
-  BOOK_ART.forEach((src, i) => loadImg(src).then((img) => {
-    if (!img) return;
-    try {
-      const w = Math.min(640, img.naturalWidth), h = Math.round(img.naturalHeight * w / img.naturalWidth);
-      const c = document.createElement("canvas"); c.width = w; c.height = h;
-      const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0, w, h);
-      const d = x.getImageData(0, 0, w, h).data;
-      let x0 = w, y0 = h, x1 = 0, y1 = 0;
-      for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (d[(yy * w + xx) * 4 + 3] > 40) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
-      if (x1 - x0 < 40 || y1 - y0 < 10 || (x1 - x0) / (y1 - y0) < 2) return; // not a usable spine
-      art[i] = { c, x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
-    } catch (e) {}
-  }));
-  function tinted(i, hue) {
-    const a = art[i]; if (!a) return null;
-    const key = i + ":" + hue; let t = tintCache.get(key);
-    if (!t) {
-      t = document.createElement("canvas"); t.width = a.w; t.height = a.h;
-      const x = t.getContext("2d");
-      x.drawImage(a.c, a.x, a.y, a.w, a.h, 0, 0, a.w, a.h);
-      x.globalCompositeOperation = "multiply"; x.fillStyle = `hsl(${hue} 46% 40%)`; x.fillRect(0, 0, a.w, a.h);
-      x.globalCompositeOperation = "destination-in"; x.drawImage(a.c, a.x, a.y, a.w, a.h, 0, 0, a.w, a.h);
-      tintCache.set(key, t);
-    }
-    return t;
-  }
-  function drawBookShape(w, h, hue, artIdx) { // centred on the origin
-    const t = tinted(artIdx, hue);
-    if (t) { // three slices so the ends of the spine keep their shape whatever the length
-      const sc = t.width * .13, cap = Math.min(w * .22, sc * (h / t.height));
-      ctx.drawImage(t, 0, 0, sc, t.height, -w / 2, -h / 2, cap, h);
-      ctx.drawImage(t, sc, 0, t.width - 2 * sc, t.height, -w / 2 + cap - .5, -h / 2, w - 2 * cap + 1, h);
-      ctx.drawImage(t, t.width - sc, 0, sc, t.height, w / 2 - cap, -h / 2, cap, h);
-      return;
-    }
-    const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); // a rounded leather spine, lit from above
-    g.addColorStop(0, `hsl(${hue} 46% 52%)`); g.addColorStop(.18, `hsl(${hue} 48% 43%)`); g.addColorStop(.75, `hsl(${hue} 50% 30%)`); g.addColorStop(1, `hsl(${hue} 52% 20%)`);
-    ctx.fillStyle = g; rr(-w / 2, -h / 2, w, h, 5); ctx.fill();
-    for (const s of [-1, 1]) {
-      for (const k of [14, 22]) { const x = s * (w / 2 - k);
-        ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.fillRect(x - 2.5, -h / 2, 5, h);
-        ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(x - 2.5, -h / 2, 1.2, h); }
-      ctx.fillStyle = "rgba(243,198,77,.85)"; ctx.fillRect(s * (w / 2 - 28) - .5, -h / 2 + 4, 1, h - 8);
-    }
-    ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect(-w / 2 + 4, -h / 2 + 1.5, w - 8, 1.5);
-  }
-  function drawBody(b) {
-    const it = b.item, w = it.w, h = it.h, hot = b === hoverBody || (drag && drag.body === b);
-    ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
-    ctx.fillStyle = "rgba(0,0,0,.32)"; rr(-w / 2 + 2, -h / 2 + 4, w, h, 6); ctx.fill();
-    if (Math.cos(b.angle) < 0) ctx.rotate(Math.PI);
-    if (it.kind === "book") {
-      drawBookShape(w, h, it.hue, it.art);
-      ctx.font = `600 12px ${SERIF}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillStyle = "rgba(20,10,0,.55)"; ctx.fillText(it.label, .6, 1.4);
-      ctx.fillStyle = "#f6dc93"; ctx.fillText(it.label, 0, .5);
-    } else {
-      ctx.fillStyle = it.gold ? "#f3c64d" : it.played ? "#cfe8d6" : "#f8f1de"; rr(-w / 2, -h / 2, w, h, 5); ctx.fill();
-      ctx.fillStyle = it.played ? "#1f7a55" : "#2550b8"; ctx.font = `800 11px ${BODY}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
-      ctx.fillText(it.played ? "✓ " + it.tag : it.tag, -w / 2 + 8, -h / 2 + 6);
-      ctx.fillStyle = "#16213a"; ctx.font = `600 10.5px ${BODY}`;
-      it.lines.forEach((l, i) => ctx.fillText(l, -w / 2 + 8, -h / 2 + 21 + i * 12.5));
-    }
-    if (hot) { ctx.strokeStyle = CHALK; ctx.lineWidth = 2.5; rr(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2, 6); ctx.stroke(); }
-    ctx.restore();
-  }
-  function drawOpenBook() {
-    const bk = cur.book; if (!bk) return;
-    const w = bk.w, o = bk.open, shaking = T < bk.shake;
-    ctx.save(); ctx.translate(bk.x, bk.y + (shaking && !reduce ? Math.sin(T / 38) * 3 : 0)); ctx.rotate(bk.a + (shaking && !reduce ? Math.sin(T / 60) * .05 : 0));
-    if (o <= 0) { drawBookShape(w, Math.max(30, w * .2), bk.hue, bk.art); ctx.restore(); return; }
-    const h = w * .34 * o + 30 * (1 - o);
-    const g = ctx.createRadialGradient(0, 0, 10, 0, 0, w * .9); g.addColorStop(0, `rgba(255,214,140,${.4 * o})`); g.addColorStop(1, "rgba(255,214,140,0)");
-    ctx.fillStyle = g; ctx.fillRect(-w, -w, w * 2, w * 2);
-    ctx.fillStyle = `hsl(${bk.hue} 48% 26%)`; rr(-w / 2 - 6, -h / 2 - 2, w + 12, h + 10, 6); ctx.fill();
-    ctx.fillStyle = "#d9cfb4"; rr(-w / 2 - 1, -h / 2 + 3, w + 2, h + 3, 3); ctx.fill(); // the block of pages under the top two
-    for (const s of [-1, 1]) { // two pages, curling up from the spine
-      const pg = ctx.createLinearGradient(0, 0, s * w / 2, 0); pg.addColorStop(0, "#e6dcc0"); pg.addColorStop(.14, "#fbf5e4"); pg.addColorStop(1, "#f3ead2");
-      ctx.fillStyle = pg;
-      ctx.beginPath(); ctx.moveTo(0, -h / 2 + 6); ctx.quadraticCurveTo(s * w * .22, -h / 2 - 8 * o, s * w / 2, -h / 2 + 2);
-      ctx.lineTo(s * w / 2, h / 2); ctx.quadraticCurveTo(s * w * .22, h / 2 - 10 * o, 0, h / 2 + 4); ctx.fill();
-    }
-    const sg = ctx.createLinearGradient(-14, 0, 14, 0); sg.addColorStop(0, "rgba(0,0,0,0)"); sg.addColorStop(.5, "rgba(0,0,0,.25)"); sg.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = sg; ctx.fillRect(-14, -h / 2, 28, h + 4);
-    if (o > .9 && w > 180) {
-      ctx.fillStyle = "#2a2116"; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.font = `700 13px ${SERIF}`;
-      wrap(bk.title, w * .4, 4).forEach((l, i) => ctx.fillText(l, -w * .26, -h / 2 + 14 + i * 15));
-      const L = cur.lectures; ctx.font = `800 30px ${DISPLAY}`; ctx.fillStyle = "#2550b8";
-      ctx.fillText(L ? (L.length ? num(L.length) : "↗") : "…", w * .26, -h / 2 + 16);
-      ctx.font = `600 11px ${BODY}`; ctx.fillStyle = "#5a6582"; ctx.fillText(L && !L.length ? "course page" : "lectures inside", w * .26, -h / 2 + 52);
-    }
-    ctx.restore();
-  }
-
   // ---------- main loop ----------
   function resize() {
     DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
-    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    if (cur.book && cur.book.ready) { cur.book.x = W / 2; cur.book.y = bookY(); }
-    placeWalls();
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); painted = null;
   }
   addEventListener("resize", resize);
   function frame(now) {
     T = now;
-    for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i], t = clamp((now - tw.t0) / tw.ms, 0, 1); tw.fn(t); if (t >= 1) { tweens.splice(i, 1); tw.done && tw.done(); } }
-    if (engine) {
-      while (spawnQ.length && spawnQ[0].at <= T) spawn(spawnQ.shift());
-      Engine.update(engine, 1000 / 60);
-      if (bodies.some((b) => b.position.y > H + 400)) { bodies = bodies.filter((b) => { if (b.position.y > H + 400) { Composite.remove(engine.world, b); return false; } return true; }); }
-    }
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const bg = cur.u && cur.u.roomImg;
     const inRoom = state === "hall" || state === "book" || (state === "walk" && $("walk").classList.contains("on"));
-    if (inRoom && bg) { // same crop as the stage and the film (cover, centred), so the hand-over is invisible
-      const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
-      ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      const fg = ctx.createLinearGradient(0, H * .55, 0, H); fg.addColorStop(0, "rgba(10,8,20,0)"); fg.addColorStop(1, "rgba(10,8,20,.45)");
-      ctx.fillStyle = fg; ctx.fillRect(0, H * .55, W, H * .45);
-    } else drawSky();
-    if (state === "book") { ctx.fillStyle = "rgba(8,10,30,.5)"; ctx.fillRect(0, 0, W, H); }
-    for (const b of bodies) if (b.item.falling) drawBody(b);
-    drawOpenBook();
-    for (const b of bodies) if (!b.item.falling) drawBody(b);
+    if (inRoom && bg) {
+      if (painted !== bg) { // the room is a still picture: paint it once, with the same crop as the stage and the film
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
+        ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh); painted = bg;
+      }
+    } else { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); drawSky(); painted = null; }
     requestAnimationFrame(frame);
   }
 

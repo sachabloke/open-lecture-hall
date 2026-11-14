@@ -40,6 +40,9 @@ button:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px sol
 #more { background: var(--chalk); color: #1b1430; border-color: transparent; }
 input { width: min(250px, 62vw); font-weight: 500; }
 input::placeholder { color: var(--muted); }
+#walk { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0;
+  transition: opacity .45s; pointer-events: none; touch-action: none; }
+#walk.on { opacity: 1; pointer-events: auto; cursor: ns-resize; }
 #hint { position: fixed; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); margin: 0; text-align: center;
   font-size: 13px; pointer-events: none; transition: opacity .4s; padding: 0 16px; z-index: 2; }
 #hint span { display: inline-block; padding: 7px 14px; border-radius: 999px; background: rgba(11, 16, 48, .82); color: var(--ink); border: 1px solid var(--line); }
@@ -64,6 +67,7 @@ input::placeholder { color: var(--muted); }
 </head>
 <body>
 <canvas id="c" aria-label="A street of university buildings at night. Use the search box to enter a university, or the list view for a plain list."></canvas>
+<video id="walk" muted playsinline preload="none" aria-label="A walk through the university gate and into its lecture hall"></video>
 <header class="hud">
   <button type="button" id="back" hidden>← Back</button>
   <div class="where">
@@ -74,6 +78,7 @@ input::placeholder { color: var(--muted); }
   <div class="tools">
     <form id="go" autocomplete="off"><input id="q" list="unis" placeholder="Enter a university…" aria-label="Enter a university"><datalist id="unis"></datalist></form>
     <button type="button" id="more" hidden>Pour more</button>
+    <button type="button" id="skip" hidden>Skip the walk ›</button>
     <a class="btn" href="list.html">List view</a>
   </div>
 </header>
@@ -99,6 +104,8 @@ input::placeholder { color: var(--muted); }
   const LIT = "#ffd27a", DARKWIN = "#161a33", CHALK = "#f3c64d";
   const HUES = [330, 150, 28, 190, 222, 45, 280, 205, 120, 12, 262, 0, 240, 300, 250, 170, 85, 215];
   const SHARDS = 128, GAP = 46;
+  // Universities with a generated walk-in: a short clip from the gate into the hall, and the hall still it ends on.
+  const WALKS = { "UC Berkeley": { video: "media/berkeley/walk.mp4", hall: "media/berkeley/hall.jpg" } };
   let W = 0, H = 0, DPR = 1, T = 0;
 
   // ---------- small helpers ----------
@@ -173,7 +180,7 @@ input::placeholder { color: var(--muted); }
       const c = { title: r[0], who: r[2], subj: r[3], year: r[4], bits: r[5], n: r[6] || 0, url: r[7], feed: r[9], lid: r[12] || "" };
       u.courses.push(c); u.nLect += c.n || 1;
     });
-    unis = [...m.values()].sort((a, b) => a.rank - b.rank || b.nLect - a.nLect);
+    unis = [...m.values()].sort((a, b) => (WALKS[b.name] ? 1 : 0) - (WALKS[a.name] ? 1 : 0) || a.rank - b.rank || b.nLect - a.nLect);
     let x = 80;
     for (const u of unis) {
       const r = rng(hash(u.name));
@@ -185,11 +192,12 @@ input::placeholder { color: var(--muted); }
       u.doorX = u.style === "campanile" ? u.w * .36 : u.w / 2;
       u.doorW = small ? 16 : u.style === "gothic" ? 26 : 24;
       u.doorH = small ? 28 : u.style === "gothic" ? 44 : 38;
+      u.walk = WALKS[u.name] || null;
       u.x = x; x += u.w + GAP;
     }
     streetW = x + 40;
     $("unis").innerHTML = unis.map((u) => `<option value="${esc(u.name)}">`).join("");
-    cam.x = Math.min(streetW / 2, W / 2 / streetZ());
+    cam.x = unis.length ? unis[0].x + unis[0].w / 2 + Math.max(0, W / 2 / streetZ() - unis[0].w / 2 - 60) : 0;
     toStreet(true);
     const want = decodeURIComponent(location.hash.slice(1));
     const u = want && unis.find((v) => v.name === want);
@@ -235,6 +243,10 @@ input::placeholder { color: var(--muted); }
     $("hint").style.opacity = 0; $("q").value = ""; $("q").blur();
     setHud("Opening the doors of", u.name, "", "", "");
     history.replaceState(null, "", "#" + encodeURIComponent(u.name));
+    if (u.walk) { // start fetching the hall picture and the clip while the camera flies to the door
+      if (!u.walk.img) { u.walk.img = new Image(); u.walk.img.src = u.walk.hall; }
+      const v = $("walk"); if (!reduce && v.getAttribute("src") !== u.walk.video) { v.src = u.walk.video; v.load(); }
+    }
     const x0 = cam.x, z0 = cam.z, g0 = cam.gy, tx = u.x + u.doorX;
     const far = Math.abs(tx - x0) * z0 > W * .45;
     const zoomIn = () => {
@@ -243,11 +255,38 @@ input::placeholder { color: var(--muted); }
         const e = ease(t);
         cam.z = z0 * Math.pow(z1 / z0, e); cam.x = lerp(x1, tx, easeOut(Math.min(1, t * 1.6))); cam.gy = lerp(g0, g1, e);
         hallMix = e; door = ease(clamp((t - .5) / .5, 0, 1));
-      }, () => { state = "hall"; hallHud(); startWorld(); pourBooks(); });
+      }, () => { if (u.walk && !reduce) startWalk(u); else arriveHall(); });
     };
     if (far) tween(clamp(Math.abs(tx - x0) * z0 / 3, 500, 1400), (t) => { cam.x = lerp(x0, tx, ease(t)); }, zoomIn);
     else zoomIn();
   }
+  function arriveHall() { state = "hall"; hallHud(); startWorld(); pourBooks(); }
+  // Play the walk-in clip full screen. Dragging up or right walks forward, down or left walks back.
+  let walkFinish = null;
+  function startWalk(u) {
+    state = "walk";
+    const v = $("walk"); let done = false;
+    setHud("You are walking into", u.name, "", "", ""); $("skip").hidden = false;
+    const finish = () => {
+      if (done) return; done = true; walkFinish = null; $("skip").hidden = true; v.onended = v.onerror = v.oncanplay = null;
+      arriveHall(); v.classList.remove("on"); setTimeout(() => v.pause(), 500);
+    };
+    walkFinish = finish; v.onended = finish; v.onerror = finish;
+    const go = () => { if (done) return; v.oncanplay = null; try { v.currentTime = 0; } catch (e) {} v.classList.add("on"); hint("Drag up to walk in, down to step back"); v.play().catch(finish); };
+    if (v.readyState >= 3) go(); else { v.oncanplay = go; setTimeout(() => { if (!done && v.readyState < 3) finish(); }, 9000); }
+  }
+  (() => {
+    const v = $("walk"); let scrub = null;
+    v.addEventListener("pointerdown", (e) => { v.setPointerCapture(e.pointerId); scrub = { x: e.clientX, y: e.clientY, t: v.currentTime }; });
+    v.addEventListener("pointermove", (e) => {
+      if (!scrub || !v.duration) return;
+      const d = (e.clientX - scrub.x) - (e.clientY - scrub.y);
+      if (Math.abs(d) > 6) { v.pause(); v.currentTime = clamp(scrub.t + d / Math.max(W, H) * v.duration * 1.3, 0, v.duration - .04); }
+    });
+    const end = () => { if (!scrub) return; scrub = null; if (state === "walk") v.play().catch(() => {}); };
+    v.addEventListener("pointerup", end); v.addEventListener("pointercancel", end);
+    $("skip").onclick = () => walkFinish && walkFinish();
+  })();
   function leaveHall() {
     const u = cur.u, x1 = cam.x, z1 = cam.z, g1 = cam.gy, z0 = streetZ(), g0 = streetGy();
     clearBodies(true); cur.book = null; state = "zoom"; setHud("Open Lecture Hall · Campus", u.name, "", "", "");
@@ -309,7 +348,9 @@ input::placeholder { color: var(--muted); }
       ctx.font = `600 11px ${BODY}`;
       const w = clamp(ctx.measureText(c.title).width + 34, 84, small ? 150 : 196), h = 24 + Math.min(14, Math.sqrt(c.n || 1) * 1.5);
       const dw = cur.u.doorW * cam.z;
-      const b = Bodies.rectangle(W / 2 + (r() - .5) * dw * .5, cam.gy - hallDoorH() * .45, w, h, { chamfer: { radius: 4 }, restitution: .22, friction: .7, frictionAir: .012, density: .002 });
+      const sxp = cur.u.walk ? W / 2 + (r() - .5) * Math.min(W * .3, 260) : W / 2 + (r() - .5) * dw * .5;
+      const syp = cur.u.walk ? H * .4 : cam.gy - hallDoorH() * .45;
+      const b = Bodies.rectangle(sxp, syp, w, h, { chamfer: { radius: 4 }, restitution: .22, friction: .7, frictionAir: .012, density: .002 });
       Body.setAngle(b, (r() - .5) * 1.2);
       Body.setVelocity(b, { x: (r() - .5) * 2 * (5 + W / 150), y: -(3 + r() * 7) });
       Body.setAngularVelocity(b, (r() - .5) * .3);
@@ -389,6 +430,7 @@ input::placeholder { color: var(--muted); }
   // ---------- controls ----------
   function goBack() {
     if (!$("player").hidden) return closePlayer();
+    if (state === "walk") { if (walkFinish) walkFinish(); return; }
     if (state === "book") backToBooks(); else if (state === "hall") leaveHall();
   }
   $("back").onclick = goBack;
@@ -646,7 +688,8 @@ input::placeholder { color: var(--muted); }
         lines.forEach((l, i) => ctx.fillText(l, u.x + u.w / 2, 12 + i * 15));
         ctx.font = `500 10.5px ${BODY}`; ctx.fillStyle = "#a9b2d6";
         ctx.fillText(`${num(u.nLect)} lectures`, u.x + u.w / 2, 14 + lines.length * 15);
-        if (lit && state === "street") { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("Open the doors ▸", u.x + u.w / 2, 29 + lines.length * 15); }
+        if (u.walk) { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("✦ Walk inside", u.x + u.w / 2, 29 + lines.length * 15); }
+        else if (lit && state === "street") { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("Open the doors ▸", u.x + u.w / 2, 29 + lines.length * 15); }
         ctx.globalAlpha = 1;
       }
     }
@@ -728,7 +771,7 @@ input::placeholder { color: var(--muted); }
     DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     if (state === "street" || state === "load") { cam.z = streetZ(); cam.gy = streetGy(); }
-    else if (state === "hall" || state === "book") { cam.z = hallDoorH() / cur.u.doorH; cam.gy = hallGy(); if (cur.book && cur.book.ready) { cur.book.x = W / 2; cur.book.y = bookY(); } }
+    else if (state === "hall" || state === "book" || state === "walk") { cam.z = hallDoorH() / cur.u.doorH; cam.gy = hallGy(); if (cur.book && cur.book.ready) { cur.book.x = W / 2; cur.book.y = bookY(); } }
     placeWalls();
   }
   addEventListener("resize", resize);
@@ -743,9 +786,16 @@ input::placeholder { color: var(--muted); }
       if (bodies.some((b) => b.position.y > H + 400)) { bodies = bodies.filter((b) => { if (b.position.y > H + 400) { Composite.remove(engine.world, b); return false; } return true; }); }
     }
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    drawSky();
+    const bg = cur.u && cur.u.walk && cur.u.walk.img;
+    const filmed = bg && bg.complete && bg.naturalWidth && (state === "hall" || state === "book" || (state === "walk" && $("walk").classList.contains("on")));
+    if (filmed) { // same crop as the clip (cover, centred), so the clip's last frame and this picture line up
+      const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
+      ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      const fg = ctx.createLinearGradient(0, H * .55, 0, H); fg.addColorStop(0, "rgba(10,8,20,0)"); fg.addColorStop(1, "rgba(10,8,20,.45)");
+      ctx.fillStyle = fg; ctx.fillRect(0, H * .55, W, H * .45);
+    } else drawSky();
     if (unis.length) {
-      drawStreet(); drawSteps();
+      if (!filmed) { drawStreet(); drawSteps(); }
       if (state === "book") { ctx.fillStyle = "rgba(8,10,30,.5)"; ctx.fillRect(0, 0, W, H); }
       for (const b of bodies) if (b.item.falling) drawBody(b);
       drawOpenBook();

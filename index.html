@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
-/* Layers, back to front: a canvas (night sky, then the lecture room with falling books), the picture gallery,
-   the stage that zooms a university picture through its doors, the walk-in film, and the controls. */
+/* Layers, back to front: a canvas (the night street of universities, then the lecture room), the shelf of books,
+   the walk-in film, the heads-up bar, an open book and the lecture player. */
 :root {
   --night: #0b1030; --ink: #eef1fb; --muted: #a9b2d6; --chalk: #f3c64d; --panel: rgba(16, 21, 48, .86);
   --line: rgba(255, 255, 255, .16);
@@ -20,54 +20,20 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--ink); font: 15px/1.4 var(--body); }
 [hidden] { display: none !important; }
-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+canvas.point { cursor: pointer; }
+canvas.grabbing { cursor: grabbing; }
 
-/* ---- gallery ---- */
-#gallery { position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: opacity .45s, transform .45s; }
-#gallery.away { opacity: 0; transform: scale(1.03); pointer-events: none; }
-.gwrap { max-width: 1240px; margin: 0 auto;
-  padding: max(22px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 90px max(16px, env(safe-area-inset-left)); }
 .eyebrow { font: 600 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--chalk); margin: 0 0 8px; }
-.ghead h1 { font: 800 clamp(30px, 6vw, 54px)/1.02 var(--display); margin: 0; letter-spacing: -.015em; }
-.ghead h1 mark { background: linear-gradient(transparent 58%, rgba(243, 198, 77, .55) 58%); color: inherit; }
-.lede { margin: 12px 0 0; max-width: 60ch; color: var(--muted); font-size: 16px; }
-.gtools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
-.band { font: 800 21px/1.2 var(--display); margin: 36px 0 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-.band small { font: 500 13px var(--body); color: var(--muted); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.ucard { position: relative; display: block; padding: 0; border: 0; border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3;
-  background: #131937; color: #fff; text-align: left; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, .4); font: inherit; }
-.ucard.hero { grid-column: span 2; aspect-ratio: auto; min-height: 240px; }
-.ucard img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
-.ucard:hover img, .ucard:focus-visible img { transform: scale(1.08); }
-.ucard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 42%, rgba(8, 10, 30, .9)); }
-.ucard:focus-visible, .tile:focus-visible { outline: 3px solid var(--chalk); outline-offset: 3px; }
-.ulabel { position: absolute; left: 12px; right: 12px; bottom: 11px; z-index: 1; }
-.ulabel b { display: block; font: 800 17px/1.15 var(--display); text-wrap: balance; }
-.ucard.hero .ulabel b { font-size: 24px; }
-.ulabel span { font-size: 12.5px; color: #d5dbf3; }
-.film { position: absolute; top: 10px; left: 10px; z-index: 1; font: 700 11px/1 var(--body); background: var(--chalk); color: #1b1430;
-  padding: 6px 9px; border-radius: 999px; }
-.tiles { display: flex; flex-wrap: wrap; gap: 8px; }
-.tile, .hud button, .btn, input, select, .pbox button, .hbar button, .bact button { font: 600 14px/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 999px; padding: 10px 14px; text-decoration: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.tile, .hud button, .pbox button, .hbar button, .bact button, select { cursor: pointer; }
-.tile { font-weight: 500; font-size: 13.5px; line-height: 1.2; text-align: left; border-radius: 12px; }
-.tile span { color: var(--muted); margin-left: 6px; font-size: 12px; }
-.tile:hover, .hud button:hover, .btn:hover, .pbox button:hover, .hbar button:hover, select:hover { border-color: var(--chalk); }
+.hud button, .btn, input, select, .pbox button, .hbar button, .bact button { font: 600 14px/1 var(--body); color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; text-decoration: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.hud button, .pbox button, .hbar button, .bact button, select { cursor: pointer; }
+.hud button:hover, .btn:hover, .pbox button:hover, .hbar button:hover, select:hover { border-color: var(--chalk); }
 .hud button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, .pbox button:focus-visible, .hbar button:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
-input { width: min(320px, 100%); font-weight: 500; flex: 1 1 220px; max-width: 360px; }
+input { width: min(250px, 62vw); font-weight: 500; }
 input::placeholder { color: var(--muted); }
-.foot { margin-top: 44px; color: var(--muted); font-size: 13px; max-width: 70ch; }
-#none { color: var(--muted); margin-top: 28px; }
+.foot { max-width: 70ch; margin: 0 auto; padding: 0 16px 60px; color: #cfd5ee; font-size: 13px; text-align: center; }
 
-/* ---- stage: the picture that zooms through the doors ---- */
-#stage { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
-#sbox { position: fixed; overflow: hidden; background: #000; }
-#szoom, #szoom img, #sroom, #sglow { position: absolute; inset: 0; width: 100%; height: 100%; }
-#szoom img, #sroom { object-fit: cover; }
-#sfull { opacity: 0; transition: opacity .3s; }
-#sroom, #sglow { opacity: 0; }
 #walk { position: fixed; inset: 0; z-index: 3; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0;
   transition: opacity .45s; pointer-events: none; touch-action: none; }
 #walk.on { opacity: 1; pointer-events: auto; cursor: ns-resize; }
@@ -155,6 +121,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   background: linear-gradient(rgba(8, 10, 30, .9), rgba(8, 10, 30, .5) 62%, transparent); pointer-events: none; }
 .hud > * { pointer-events: auto; }
 .where { flex: 1 1 260px; min-width: 0; pointer-events: none; }
+.where h1 mark { background: linear-gradient(transparent 58%, rgba(243, 198, 77, .55) 58%); color: inherit; }
 .where h1 { font: 800 clamp(20px, 3.4vw, 34px)/1.08 var(--display); margin: 0; letter-spacing: -.01em; text-wrap: balance;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 #sub { margin: 6px 0 0; color: #cfd5ee; font-size: 13.5px; }
@@ -175,51 +142,27 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
 .pfoot { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 12px; flex-wrap: wrap; }
 .pfoot a { color: var(--chalk); font-weight: 600; font-size: 14px; }
 @media (max-width: 560px) {
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .shelf { grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
   .bk b { font-size: 14.5px; }
-  .ucard.hero { min-height: 200px; }
-  .ulabel b { font-size: 14.5px; } .ulabel span { font-size: 11.5px; }
   .hud { gap: 8px; } .hud button, .btn, input, .pbox button { padding: 9px 12px; font-size: 13px; }
 }
-@media (prefers-reduced-motion: reduce) { .ucard img, #gallery, .bk { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .bk { transition: none; } }
 </style>
 </head>
 <body>
-<canvas id="c" aria-hidden="true"></canvas>
-
-<main id="gallery">
-  <div class="gwrap">
-    <header class="ghead">
-      <p class="eyebrow">Free university lectures · no sign-up · no payment</p>
-      <h1>Open <mark>Lecture</mark> Hall</h1>
-      <p class="lede" id="lede">Tap a university to walk through its doors. Its courses are waiting inside as books, and every book is full of lectures you can play.</p>
-      <div class="gtools">
-        <input id="q" type="search" placeholder="Find a university…" aria-label="Find a university" autocomplete="off">
-        <a class="btn" href="list.html">Plain list of every course</a>
-      </div>
-    </header>
-    <div id="bands"><p id="none">Opening the gates…</p></div>
-    <p class="foot">The pictures and the walk-in film are illustrations made with AI from each university's best-known building. They are not photographs, and this site is not run by or connected to any of the universities. The lectures are the universities' own free recordings.</p>
-  </div>
-</main>
-
-<div id="stage" hidden>
-  <div id="sbox">
-    <div id="szoom"><img id="sthumb" alt=""><img id="sfull" alt=""></div>
-    <div id="sglow"></div>
-    <img id="sroom" alt="">
-  </div>
-</div>
+<canvas id="c" aria-label="A street of university buildings at night. Use the search box to enter a university, or the list view for a plain list."></canvas>
 <video id="walk" muted playsinline preload="none" aria-label="A walk through the university gate and into its lecture hall"></video>
 
-<header class="hud" id="hud" hidden>
+<header class="hud" id="hud">
   <div class="where">
-    <p class="eyebrow" id="eyebrow"></p>
-    <h1 id="title"></h1>
+    <p class="eyebrow" id="eyebrow">Free university lectures · no sign-up · no payment</p>
+    <h1 id="title">Open Lecture Hall</h1>
+    <p id="sub">Lighting the windows…</p>
   </div>
   <div class="tools">
+    <form id="go" autocomplete="off"><input id="q" list="unis" placeholder="Enter a university…" aria-label="Enter a university"><datalist id="unis"></datalist></form>
     <button type="button" id="skip" hidden>Skip the walk ›</button>
+    <a class="btn" href="list.html">List view</a>
   </div>
 </header>
 <p id="hint"><span id="hintText"></span></p>
@@ -235,6 +178,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   </div>
   <div class="shelf" id="shelf"></div>
   <p id="cnone" hidden>No course matches that.</p>
+  <p class="foot">The lecture room and the Berkeley walk-in film are AI-made illustrations, not photographs, and this site is not run by or connected to any university. The lectures are the universities' own free recordings.</p>
 </section>
 
 <div id="bookwrap" hidden>
@@ -271,31 +215,18 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const DISPLAY = '"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif';
   const HUES = [330, 150, 28, 190, 222, 45, 280, 205, 120, 12, 262, 0, 240, 300, 250, 170, 85, 215];
-  const SHARDS = 128;
+  const BODY = '-apple-system, "Segoe UI", Roboto, "Noto Sans", system-ui, sans-serif';
+  const LIT = "#ffd27a", DARKWIN = "#161a33", CHALK = "#f3c64d";
+  const SHARDS = 128, GAP = 46;
+  // Universities with a filmed walk-in: a short clip from the gate into the hall, ending on that university's room picture.
+  const WALKS = { "UC Berkeley": "media/berkeley/walk.mp4" };
   let W = 0, H = 0, DPR = 1, T = 0, painted = null;
-
-  // Universities with a picture: [file name, lecture room, how far down the picture the doors are (0-1), film].
-  // A room is one of media/rooms/<room>.jpg. A film is a walk-in clip that ends on that room.
-  const PICS = {
-    "UC Berkeley": ["berkeley", "berkeley", .70, "media/berkeley/walk.mp4"],
-    "University of Oxford": ["oxford", "oak", .70], "MIT": ["mit", "classical", .68], "Yale University": ["yale", "oak", .72],
-    "Stanford University": ["stanford", "classical", .68], "Harvard University": ["harvard", "classical", .66],
-    "University of Cambridge": ["cambridge", "oak", .67], "Princeton University": ["princeton", "oak", .68],
-    "University of Chicago": ["chicago", "oak", .74], "Columbia University": ["columbia", "classical", .65],
-    "Cornell University": ["cornell", "oak", .73], "Caltech": ["caltech", "classical", .69],
-    "London School of Economics (LSE)": ["lse", "classical", .72], "Peking University": ["peking", "classical", .68],
-    "UCLA": ["ucla", "classical", .75], "New York University": ["nyu", "classical", .75], "Tsinghua University": ["tsinghua", "classical", .73],
-    "University of Toronto": ["toronto", "oak", .68], "UT Austin": ["utaustin", "classical", .74],
-    "University of Edinburgh": ["edinburgh", "oak", .68], "Duke University": ["duke", "oak", .76],
-    "IIT Kharagpur": ["iitkgp", "modern", .75], "IIT Madras": ["iitm", "modern", .74], "IIT Kanpur": ["iitk", "modern", .67],
-    "IIT Roorkee": ["iitr", "modern", .70], "IIT Bombay": ["iitb", "modern", .73], "IIT Guwahati": ["iitg", "modern", .66],
-    "IISc Bangalore": ["iisc", "modern", .74], "IIT Delhi": ["iitd", "modern", .69], "IIT Hyderabad": ["iith", "modern", .68],
-    "IIT-ISM Dhanbad": ["iitism", "modern", .74], "UC Irvine": ["uci", "classical", .67], "IIT (BHU) Varanasi": ["bhu", "modern", .74],
-  };
 
   // ---------- small helpers ----------
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
   function hash(s) { let h = 5381; for (const ch of s) h = (Math.imul(h, 33) ^ ch.codePointAt(0)) >>> 0; return h; }
   function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -304,6 +235,26 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   const num = (n) => n.toLocaleString();
   const fold = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   function loadImg(src) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
+
+  function fit(text, maxW) { // shorten text to a pixel width with the current ctx.font
+    if (ctx.measureText(text).width <= maxW) return text;
+    let lo = 0, hi = text.length;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ctx.measureText(text.slice(0, m) + "…").width <= maxW) lo = m; else hi = m - 1; }
+    return text.slice(0, lo).trimEnd() + "…";
+  }
+  function wrap(text, maxW, maxLines) {
+    const words = text.split(/\s+/), lines = []; let cur = "";
+    for (const w of words) {
+      const t = cur ? cur + " " + w : w;
+      if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+      if (lines.length === maxLines) break;
+    }
+    if (lines.length < maxLines && cur) lines.push(cur);
+    if (lines.length === maxLines) { const used = lines.join(" ").length; if (used < text.length - 1) lines[maxLines - 1] = fit(lines[maxLines - 1] + " …", maxW); }
+    return lines.map((l) => fit(l, maxW));
+  }
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+  const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 
   // ---------- data ----------
   let data = null, unis = [];
@@ -324,6 +275,24 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
     return { open: u, where: "its own page" };
   }
 
+  function styleFor(u) {
+    const n = u.name;
+    if (u.nLect < 14 && u.courses.length < 3) return "cottage";
+    if (/oxford|cambridge|yale|princeton|chicago|edinburgh|duke|toronto|king.s college|trinity|leuven|cornell/i.test(n)) return "gothic";
+    if (/\bMIT\b|columbia|caltech|virginia|london|college de france|collège/i.test(n)) return "dome";
+    if (/berkeley|stanford|texas|austin|ucla|irvine|davis/i.test(n)) return "campanile";
+    if (/harvard|brown|dartmouth|william|college/i.test(n)) return "georgian";
+    return ["modern", "modern", "modern", "dome", "georgian", "campanile", "gothic"][hash(n) % 7];
+  }
+
+  // where the street starts: the first building near the left edge, until the visitor moves it
+  let panned = false;
+  const startX = () => (unis.length ? unis[0].x + unis[0].w / 2 + Math.max(0, W / 2 / streetZ() - unis[0].w / 2 - 60) : 0);
+  function roomFor(u) { // which lecture room picture a university opens into
+    if (u.name === "UC Berkeley") return "berkeley";
+    if (/\b(IIT|IISc|IISER|IIIT|NPTEL|IMSc)\b|Indian|India/i.test(u.name)) return "modern";
+    return { gothic: "oak", cottage: "seminar", modern: "modern" }[u.style] || "classical";
+  }
   function init(d) {
     data = d;
     const m = new Map();
@@ -336,141 +305,90 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
       const c = { title: r[0], who: r[2], subj: r[3], year: r[4], bits: r[5], n: r[6] || 0, url: r[7], feed: r[9], desc: r[10] || "", lid: r[12] || "" };
       u.courses.push(c); u.nLect += c.n || 1;
     });
-    unis = [...m.values()].sort((a, b) => b.nLect - a.nLect);
+    // the street runs from the best-ranked universities to the smallest sources; a filmed walk-in stands first
+    unis = [...m.values()].sort((a, b) => (WALKS[b.name] ? 1 : 0) - (WALKS[a.name] ? 1 : 0) || a.rank - b.rank || b.nLect - a.nLect);
+    let x = 80;
     for (const u of unis) {
+      const r = rng(hash(u.name));
       u.courses.sort((a, b) => (b.lid ? 1 : 0) - (a.lid ? 1 : 0) || b.n - a.n);
-      const p = PICS[u.name];
-      if (p) u.pic = { small: `media/u/${p[0]}-s.jpg`, large: `media/u/${p[0]}.jpg`, doorY: p[2], walk: p[3] || "" };
-      const room = p ? p[1] : /\b(IIT|IISc|IISER|IIIT|NPTEL|IMSc)\b|Indian|India/i.test(u.name) ? "modern" : "seminar";
-      u.roomSrc = `media/rooms/${room}.jpg`;
-      u.key = fold(u.name);
+      u.style = styleFor(u);
+      const small = u.style === "cottage";
+      u.w = Math.round(small ? 84 + r() * 22 : 124 + 30 * Math.log10(1 + u.courses.length) + r() * 22);
+      u.h = Math.round(small ? 70 + r() * 20 : 92 + 58 * Math.log10(1 + u.nLect) + r() * 18);
+      u.doorX = u.style === "campanile" ? u.w * .36 : u.w / 2;
+      u.doorW = small ? 16 : u.style === "gothic" ? 26 : 24;
+      u.doorH = small ? 28 : u.style === "gothic" ? 44 : 38;
+      u.walk = WALKS[u.name] || "";
+      u.roomSrc = `media/rooms/${roomFor(u)}.jpg`;
+      u.x = x; x += u.w + GAP;
     }
-    buildGallery();
-    state = "gallery";
+    streetW = x + 40;
+    $("unis").innerHTML = unis.map((u) => `<option value="${esc(u.name)}">`).join("");
+    cam.x = startX();
+    toStreet(true);
     const want = decodeURIComponent(location.hash.slice(1));
     const u = want && unis.find((v) => v.name === want);
-    if (u) enter(u, null);
+    if (u) enter(u);
   }
 
-  // ---------- gallery ----------
-  function card(u, hero) {
-    return `<button type="button" class="ucard${hero ? " hero" : ""}" data-u="${esc(u.name)}" data-k="${esc(u.key)}">` +
-      `<img src="${esc(u.pic.small)}" alt="" loading="lazy" decoding="async">` +
-      (u.pic.walk ? `<span class="film">✦ Filmed walk-in</span>` : "") +
-      `<span class="ulabel"><b>${esc(u.name)}</b><span>${num(u.nLect)} lectures · ${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"}</span></span></button>`;
-  }
-  function buildGallery() {
-    const pictured = unis.filter((u) => u.pic);
-    const first = (u) => (u.pic.walk ? 0 : 1);
-    const band = (rank) => pictured.filter((u) => u.rank === rank).sort((a, b) => first(a) - first(b) || b.nLect - a.nLect);
-    const rest = unis.filter((u) => !u.pic);
-    const total = unis.reduce((s, u) => s + u.nLect, 0);
-    const sec = (title, note, list) => list.length ? `<section data-band><h2 class="band">${title} <small>${note}</small></h2><div class="grid">${list.map((u, i) => card(u, u.pic.walk && i === 0)).join("")}</div></section>` : "";
-    $("bands").innerHTML =
-      sec("World top 25", "in the main world rankings", band(1)) +
-      sec("World top 100", "", band(2)) +
-      sec("Institutes of technology and more", "ranked universities with the biggest lecture libraries", pictured.filter((u) => u.rank > 2).sort((a, b) => b.nLect - a.nLect)) +
-      `<section data-band><h2 class="band">More universities, colleges and lecturers <small>${num(rest.length)} more</small></h2><div class="tiles">` +
-      rest.map((u) => `<button type="button" class="tile" data-u="${esc(u.name)}" data-k="${esc(u.key)}">${esc(u.name)}<span>${num(u.nLect)}</span></button>`).join("") +
-      `</div></section><p id="none" hidden>No university by that name.</p>`;
-    $("lede").textContent = `Tap a university to walk through its doors. Its courses are waiting inside as books, and every book is full of lectures you can play: ${num(total)} of them, from ${num(unis.length)} universities and lecturers.`;
-  }
-  $("bands").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-u]"); if (!b) return;
-    const u = unis.find((v) => v.name === b.dataset.u); if (u) enter(u, b.classList.contains("ucard") ? b : null);
-  });
-  function filterGallery() {
-    const q = fold($("q").value.trim()); let any = false;
-    document.querySelectorAll("#bands [data-band]").forEach((s) => {
-      let n = 0;
-      s.querySelectorAll("[data-k]").forEach((el) => { const ok = !q || el.dataset.k.includes(q); el.hidden = !ok; if (ok) n++; });
-      s.hidden = !n; if (n) any = true;
-    });
-    const none = $("none"); if (none) none.hidden = any;
-  }
-  $("q").addEventListener("input", filterGallery);
-  $("q").addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    const el = document.querySelector("#bands [data-k]:not([hidden])"); if (el) el.click();
-  });
-
-  // ---------- scene state ----------
-  let state = "load";                       // load | gallery | enter | walk | hall | book
+  // ---------- camera and scene state ----------
+  const cam = { x: 0, z: 1, gy: 0 };       // world x at screen centre, zoom, screen y of the ground line
+  let state = "load";                       // load | street | zoom | walk | hall | book
   let cur = { u: null, course: null, lectures: null };
+  let door = 0, hallMix = 0, flash = 0, panVel = 0, hover = null, streetW = 0;
+  const tweens = [];
+  function tween(ms, fn, done) { tweens.push({ t0: performance.now(), ms: reduce ? 1 : ms, fn, done }); }
+  const streetZ = () => clamp(H * .6 / 470, .5, 1.25);
+  const streetGy = () => Math.round(H * .76);
+  const hallDoorH = () => clamp(H * .26, 120, 230);
+  const hallGy = () => Math.round(H * .47);
+  const sx = (wx) => (wx - cam.x) * cam.z + W / 2;
   let hintTimer = 0;
-  function hint(text) { // show a hint, then let it fade so it never sits on the pile
+  function hint(text) { // show a hint, then let it fade
     $("hintText").textContent = text; $("hint").style.opacity = 1;
     clearTimeout(hintTimer); hintTimer = setTimeout(() => { $("hint").style.opacity = 0; }, 6000);
   }
-  function setHud(eyebrow, title) { $("hud").hidden = false; $("eyebrow").textContent = eyebrow; $("title").textContent = title; }
-  function toGallery() {
+  function setHud(eyebrow, title, sub) { $("hud").hidden = false; $("eyebrow").textContent = eyebrow; $("title").textContent = title; $("sub").textContent = sub || ""; }
+  function toStreet(first) {
     closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelf").innerHTML = "";
-    cur.u = null; cur.course = null; cur.lectures = null; state = "gallery";
-    $("hud").hidden = true; $("hint").style.opacity = 0;
-    $("gallery").classList.remove("away");
-    history.replaceState(null, "", location.pathname + location.search);
+    state = "street"; cur.u = null; cur.course = null; cur.lectures = null; door = 0; hallMix = 0; flash = 0;
+    cam.z = streetZ(); cam.gy = streetGy();
+    const total = unis.reduce((s, u) => s + u.nLect, 0);
+    setHud("Free university lectures · no sign-up · no payment", "Pick a university. Open its doors.",
+      `${num(unis.length)} universities and lecturers · ${num(total)} free lectures inside`);
+    $("go").hidden = false; $("skip").hidden = true;
+    hint("Drag the street · tap a building to open its doors");
+    if (!first) history.replaceState(null, "", location.pathname + location.search);
   }
 
   // ---------- walking in ----------
-  const stage = $("stage"), sbox = $("sbox"), szoom = $("szoom"), sroom = $("sroom"), sglow = $("sglow");
-  function resetStage() {
-    stage.getAnimations({ subtree: true }).forEach((a) => a.cancel());
-    stage.hidden = true; $("sfull").style.opacity = 0; $("sfull").removeAttribute("src"); sroom.removeAttribute("src");
-  }
-  async function enter(u, fromCard) {
-    if (state !== "gallery") return;
-    state = "enter"; cur.u = u; $("q").blur();
+  function enter(u) {
+    if (state !== "street") return;
+    state = "zoom"; cur.u = u; panVel = 0; hover = null; panned = true; cv.classList.remove("point");
+    $("hint").style.opacity = 0; $("q").value = ""; $("q").blur(); $("go").hidden = true;
+    setHud("Opening the doors of", u.name, "");
     history.replaceState(null, "", "#" + encodeURIComponent(u.name));
-    const roomP = u.roomImg ? Promise.resolve(u.roomImg) : loadImg(u.roomSrc).then((img) => (u.roomImg = img));
-    const film = u.pic && u.pic.walk && !reduce;
-    if (film) { const v = $("walk"); if (v.getAttribute("src") !== u.pic.walk) { v.src = u.pic.walk; v.load(); } }
-    const r = fromCard ? fromCard.getBoundingClientRect() : { left: W * .3, top: H * .3, width: W * .4, height: H * .4 };
-    $("gallery").classList.add("away");
-    setHud("You are walking into", u.name);
-    resetStage();
-    Object.assign(sbox.style, { left: "0", top: "0", width: "100%", height: "100%", borderRadius: "0" });
-    stage.hidden = false;
-
-    if (!u.pic || reduce) { // no picture of this one: fade straight into a lecture room
-      $("sthumb").removeAttribute("src");
-      await Promise.race([roomP, wait(2500)]);
-      if (u.roomImg) { sroom.src = u.roomSrc; await sroom.animate([{ opacity: 0, transform: "scale(1.25)" }, { opacity: 1, transform: "scale(1)" }],
-        { duration: reduce ? 1 : 900, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" }).finished; }
-      if (cur.u !== u) return;
-      arriveHall(); requestAnimationFrame(() => requestAnimationFrame(resetStage));
-      return;
-    }
-
-    // 1. the little picture grows to fill the screen
-    $("sthumb").src = u.pic.small;
-    const fullP = loadImg(u.pic.large).then((img) => { if (img && cur.u === u && state !== "gallery") { $("sfull").src = u.pic.large; $("sfull").style.opacity = 1; } });
-    await sbox.animate([
-      { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", borderRadius: "14px" },
-      { left: "0px", top: "0px", width: W + "px", height: H + "px", borderRadius: "0px" }],
-      { duration: 620, easing: "cubic-bezier(.3,.7,.2,1)" }).finished;
-    if (cur.u !== u) return;
-
-    // 2a. a film takes over from the same picture
-    if (film) { startWalk(u); return; }
-
-    // 2b. otherwise fly at the doors until their light swallows the screen, and come out inside the room
-    await Promise.race([Promise.all([fullP, roomP]), wait(2600)]);
-    await wait(250);
-    if (cur.u !== u) return;
-    const k = Math.max(W / 16, H / 9), iw = 16 * k, ih = 9 * k;      // the pictures are 16:9, shown "cover"
-    const dx = (W - iw) / 2 + .5 * iw, dy = (H - ih) / 2 + u.pic.doorY * ih;
-    szoom.style.transformOrigin = `${dx}px ${dy}px`;
-    sglow.style.background = `radial-gradient(circle at ${dx}px ${dy}px, rgba(255,240,205,1) 0, rgba(255,208,128,.95) 14%, rgba(255,190,100,0) 60%)`;
-    const D = 2000;
-    szoom.animate([{ transform: "scale(1)" }, { transform: "scale(11)" }], { duration: D, easing: "cubic-bezier(.6,0,.9,.4)", fill: "forwards" });
-    sglow.animate([{ opacity: 0 }, { opacity: 0, offset: .4 }, { opacity: 1 }], { duration: D, easing: "ease-in", fill: "forwards" });
-    await wait(D * .8);
-    if (cur.u !== u) return;
-    if (u.roomImg) sroom.src = u.roomSrc;
-    await sroom.animate([{ opacity: 0, transform: "scale(1.8)" }, { opacity: 1, transform: "scale(1.3)", offset: .3 }, { opacity: 1, transform: "scale(1)" }],
-      { duration: 1500, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" }).finished;
-    if (cur.u !== u) return;
-    arriveHall(); requestAnimationFrame(() => requestAnimationFrame(resetStage));
+    if (!u.roomImg) loadImg(u.roomSrc).then((img) => { u.roomImg = img; }); // fetched while the camera flies to the door
+    const film = u.walk && !reduce;
+    if (film) { const v = $("walk"); if (v.getAttribute("src") !== u.walk) { v.src = u.walk; v.load(); } }
+    const x0 = cam.x, z0 = cam.z, g0 = cam.gy, tx = u.x + u.doorX;
+    const far = Math.abs(tx - x0) * z0 > W * .45;
+    const zoomIn = () => {
+      const x1 = cam.x, z1 = hallDoorH() / u.doorH, g1 = hallGy();
+      tween(1300, (t) => {
+        const e = ease(t);
+        cam.z = z0 * Math.pow(z1 / z0, e); cam.x = lerp(x1, tx, easeOut(Math.min(1, t * 1.6))); cam.gy = lerp(g0, g1, e);
+        hallMix = e; door = ease(clamp((t - .5) / .5, 0, 1));
+      }, () => { if (film) startWalk(u); else throughDoor(u); });
+    };
+    if (far) tween(clamp(Math.abs(tx - x0) * z0 / 3, 500, 1400), (t) => { cam.x = lerp(x0, tx, ease(t)); }, zoomIn);
+    else zoomIn();
+  }
+  // Keep going straight through the open doorway until its light fills the screen; the room appears out of the light.
+  function throughDoor(u) {
+    const z1 = cam.z, g1 = cam.gy, z2 = z1 * 5.5, g2 = H / 2 + u.doorH * z2 / 2;
+    tween(800, (t) => { const e = t * t; cam.z = z1 * Math.pow(z2 / z1, e); cam.gy = lerp(g1, g2, e); flash = clamp(t * 1.3, 0, 1); },
+      () => { arriveHall(); tween(700, (t) => { flash = 1 - t; }); });
   }
   function arriveHall() {
     state = "hall"; $("hud").hidden = true; $("hint").style.opacity = 0;
@@ -478,16 +396,26 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
     const hall = $("hall"); hall.hidden = false; hall.scrollTop = 0;
     if (!reduce) { hall.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" }); flyIn(); }
   }
+  function leaveHall() { // back out of the doors to the street
+    const u = cur.u;
+    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelf").innerHTML = "";
+    if (!u) return toStreet();
+    state = "zoom"; flash = 0; cur.course = null; cur.lectures = null;
+    const z1 = hallDoorH() / u.doorH, g1 = hallGy(), z0 = streetZ(), g0 = streetGy();
+    cam.x = u.x + u.doorX; cam.z = z1; cam.gy = g1; hallMix = 1; door = 1;
+    setHud("Leaving", u.name, "");
+    tween(800, (t) => { const e = ease(t); cam.z = z1 * Math.pow(z0 / z1, e); cam.gy = lerp(g1, g0, e); hallMix = 1 - e; door = 1 - e; }, () => toStreet());
+  }
 
   // The filmed walk-in. Dragging up or right walks forward, down or left walks back.
   let walkFinish = null;
   function startWalk(u) {
     state = "walk";
     const v = $("walk"); let done = false;
-    $("skip").hidden = false;
+    setHud("You are walking into", u.name, ""); $("skip").hidden = false;
     const finish = () => {
       if (done) return; done = true; walkFinish = null; $("skip").hidden = true; v.onended = v.onerror = v.oncanplay = null;
-      resetStage(); arriveHall(); v.classList.remove("on"); setTimeout(() => v.pause(), 500);
+      arriveHall(); v.classList.remove("on"); setTimeout(() => v.pause(), 500);
     };
     walkFinish = finish; v.onended = finish; v.onerror = finish;
     const go = () => { if (done) return; v.oncanplay = null; try { v.currentTime = 0; } catch (e) {} v.classList.add("on"); hint("Drag up to walk in, down to step back"); v.play().catch(finish); };
@@ -619,20 +547,257 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   function goBack() {
     if (!$("player").hidden) return closePlayer();
     if (state === "walk") { if (walkFinish) walkFinish(); return; }
-    if (state === "book") closeBook(); else if (state === "hall") toGallery();
+    if (state === "book") closeBook(); else if (state === "hall") leaveHall();
   }
   $("hback").onclick = goBack;
-  addEventListener("keydown", (e) => { if (e.key === "Escape") goBack(); });
+  function findUni() {
+    const q = fold($("q").value.trim()); if (!q || !unis.length || state !== "street") return;
+    const u = unis.find((v) => fold(v.name) === q) || unis.find((v) => fold(v.name).includes(q));
+    if (!u) { $("q").value = ""; $("q").placeholder = "No university by that name"; return; }
+    enter(u);
+  }
+  $("go").addEventListener("submit", (e) => { e.preventDefault(); findUni(); });
+  $("q").addEventListener("change", findUni);
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape") goBack();
+    if (state === "street" && document.activeElement !== $("q")) { if (e.key === "ArrowRight") { panVel = 26; panned = true; } if (e.key === "ArrowLeft") { panVel = -26; panned = true; } }
+  });
 
-  // ---------- drawing: night sky behind the gallery ----------
-  const stars = (() => { const r = rng(7); return Array.from({ length: 190 }, () => ({ x: r(), y: r(), s: .5 + r() * 1.3, p: r() * 6.28 })); })();
+  // dragging the street, and tapping a building
+  const p = { down: false, x: 0, y: 0, sx: 0, sy: 0, moved: 0, pan0: 0 };
+  function uniAt(x, y) {
+    const wx = (x - W / 2) / cam.z + cam.x, wy = (y - cam.gy) / cam.z;
+    if (wy > 44) return null;
+    return unis.find((u) => wx >= u.x - 6 && wx <= u.x + u.w + 6 && wy >= -u.h - 10) || null;
+  }
+  cv.addEventListener("pointerdown", (e) => {
+    cv.setPointerCapture(e.pointerId);
+    p.down = true; p.x = p.sx = e.clientX; p.y = p.sy = e.clientY; p.moved = 0; p.pan0 = cam.x; panVel = 0;
+    if (state === "street") cv.classList.add("grabbing");
+  });
+  cv.addEventListener("pointermove", (e) => {
+    const dx = e.clientX - p.x; p.x = e.clientX; p.y = e.clientY;
+    if (p.down) {
+      p.moved = Math.max(p.moved, Math.hypot(p.x - p.sx, p.y - p.sy));
+      if (state === "street") { cam.x = clamp(p.pan0 - (p.x - p.sx) / cam.z, 0, streetW); panVel = -dx / cam.z; if (p.moved > 8) { panned = true; $("hint").style.opacity = 0; } }
+      return;
+    }
+    if (e.pointerType === "mouse" && state === "street") { hover = uniAt(p.x, p.y); cv.classList.toggle("point", !!hover); }
+  });
+  function up() {
+    if (!p.down) return; p.down = false; cv.classList.remove("grabbing");
+    if (p.moved >= 8 || state !== "street") return;
+    panVel = 0; const u = uniAt(p.x, p.y); if (u) enter(u);
+  }
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.addEventListener("wheel", (e) => { if (state === "street") { e.preventDefault(); cam.x = clamp(cam.x + (e.deltaX + e.deltaY) / cam.z, 0, streetW); panned = true; $("hint").style.opacity = 0; } }, { passive: false });
+
+  // ---------- drawing: sky and street ----------
+  const stars = (() => { const r = rng(7); return Array.from({ length: 170 }, () => ({ x: r(), y: r() * .7, s: .5 + r() * 1.3, p: r() * 6.28 })); })();
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#080b24"); g.addColorStop(.55, "#191a48"); g.addColorStop(1, "#3a2760");
+    g.addColorStop(0, "#080b24"); g.addColorStop(.5, "#1b1c4d"); g.addColorStop(.78, "#4a2f6b"); g.addColorStop(1, "#7a4a6e");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     for (const s of stars) {
-      ctx.fillStyle = `rgba(255,255,255,${reduce ? .6 : .35 + .4 * Math.sin(T / 900 + s.p)})`;
-      ctx.fillRect(s.x * W, s.y * H, s.s, s.s);
+      const a = reduce ? .7 : .45 + .45 * Math.sin(T / 900 + s.p);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      const x = ((s.x * W - cam.x * .02) % W + W) % W;
+      ctx.fillRect(x, s.y * H, s.s, s.s);
+    }
+    const mx = W * .8 - cam.x * .004, my = Math.max(120, H * .2);
+    const mg = ctx.createRadialGradient(mx, my, 10, mx, my, 150);
+    mg.addColorStop(0, "rgba(255,240,200,.3)"); mg.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = mg; ctx.fillRect(mx - 150, my - 150, 300, 300);
+    ctx.fillStyle = "#fff3d0"; ctx.beginPath(); ctx.arc(mx, my, 30, 0, 6.3); ctx.fill();
+    ctx.fillStyle = "rgba(210,190,150,.5)"; ctx.beginPath(); ctx.arc(mx - 9, my - 6, 6, 0, 6.3); ctx.arc(mx + 10, my + 9, 4, 0, 6.3); ctx.fill();
+  }
+  function drawBackRow() { // far skyline, slower than the street
+    const par = .4, cell = 74, z = cam.z * .8, gy = cam.gy + 2;
+    const left = cam.x * par - W / 2 / z, i0 = Math.floor(left / cell) - 1, i1 = Math.ceil((left + W / z) / cell) + 1;
+    for (let i = i0; i <= i1; i++) {
+      const r = rng(i * 7919 + 13), h = 50 + r() * 190, w = cell * (.7 + r() * .5);
+      const x = (i * cell - cam.x * par) * z + W / 2;
+      ctx.fillStyle = "#15183c"; ctx.fillRect(x, gy - h * z, w * z, h * z);
+      if (r() < .4) { ctx.beginPath(); ctx.moveTo(x, gy - h * z); ctx.lineTo(x + w * z / 2, gy - (h + 30) * z); ctx.lineTo(x + w * z, gy - h * z); ctx.fill(); }
+      ctx.fillStyle = "rgba(255,210,122,.5)";
+      for (let k = 0; k < 5; k++) { const wx = r() * (w - 6), wy = r() * (h - 14); if (r() < .6) ctx.fillRect(x + wx * z, gy - (h - 6 - wy) * z, 3 * z, 4 * z); }
+    }
+  }
+
+  // one window; lit windows flicker now and then
+  function win(r, x, y, w, h, arch, cool) {
+    const k = r(), lit = k < .58 || (k < .66 && Math.sin(T / 1400 + k * 90) > 0);
+    if (lit) { ctx.fillStyle = cool ? "rgba(150,210,255,.14)" : "rgba(255,200,110,.16)"; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); }
+    ctx.fillStyle = lit ? (cool ? "#a9d6ff" : LIT) : DARKWIN;
+    if (arch) { ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + w * .7); ctx.quadraticCurveTo(x, y + w * .1, x + w / 2, y);
+      ctx.quadraticCurveTo(x + w, y + w * .1, x + w, y + w * .7); ctx.lineTo(x + w, y + h); ctx.fill(); }
+    else ctx.fillRect(x, y, w, h);
+  }
+  function grid(r, x0, x1, yTop, yBot, cw, ch, ww, wh, arch, cool, skip) {
+    const cols = Math.max(1, Math.floor((x1 - x0) / cw)), rows = Math.max(1, Math.floor((yBot - yTop) / ch));
+    const ox = x0 + ((x1 - x0) - cols * cw) / 2 + (cw - ww) / 2, oy = yTop + ((yBot - yTop) - rows * ch) / 2 + (ch - wh) / 2;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const x = ox + i * cw, y = oy + j * ch;
+      if (skip && skip(x, y, ww, wh)) { r(); continue; }
+      win(r, x, y, ww, wh, arch, cool);
+    }
+  }
+  const tri = (x0, y0, x1, y1, x2, y2, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.fill(); };
+
+  // Buildings are drawn in their own space: x from 0 to w, ground at y = 0, up is negative.
+  function drawBuilding(u, lit) {
+    const r = rng(hash(u.name) ^ 99), w = u.w, h = u.h, dx = u.doorX, dw = u.doorW, dh = u.doorH;
+    const nearDoor = (x, y, ww, wh) => x < dx + dw / 2 + 5 && x + ww > dx - dw / 2 - 5 && y + wh > -dh - 8;
+    let topX = w / 2;
+    if (u.style === "gothic") {
+      const bh = h * .56, tw = Math.max(34, w * .34), tx = (w - tw) / 2, th = h * .9;
+      R(0, -bh, w, bh, "#4a4f76"); R(w * .86, -bh, w * .14, bh, "#3d4166");
+      for (let x = 0; x < w - 4; x += 10) R(x, -bh - 5, 6, 5, "#4a4f76");
+      R(-3, -bh * .8, 5, bh * .8, "#3d4166"); R(w - 2, -bh * .8, 5, bh * .8, "#343859");
+      grid(r, 4, tx - 2, -bh + 12, -6, 20, bh * .42, 9, bh * .27, true, false);
+      grid(r, tx + tw + 2, w - 4, -bh + 12, -6, 20, bh * .42, 9, bh * .27, true, false);
+      R(tx, -th, tw, th, "#565c88"); R(tx + tw * .8, -th, tw * .2, th, "#474c75");
+      for (let x = tx; x < tx + tw - 3; x += 9) R(x, -th - 5, 5, 5, "#565c88");
+      tri(tx - 2, -th, tx + 3, -h - 6, tx + 8, -th, "#474c75"); tri(tx + tw - 8, -th, tx + tw - 3, -h - 6, tx + tw + 2, -th, "#474c75");
+      tri(tx + tw / 2 - 5, -th, tx + tw / 2, -h, tx + tw / 2 + 5, -th, "#3d4166");
+      win(r, tx + tw / 2 - 7, -th + 14, 14, 30, true); win(r, tx + tw / 2 - 5, -bh - 26, 10, 20, true);
+      ctx.fillStyle = "#e9e2c8"; ctx.beginPath(); ctx.arc(tx + tw / 2, -th + 62, 7, 0, 6.3); ctx.fill();
+      R(tx + tw / 2 - .5, -th + 57, 1, 5, "#333"); R(tx + tw / 2, -th + 61.5, 4, 1, "#333");
+    } else if (u.style === "dome") {
+      const bh = h * .5, pw = w * .56, px = (w - pw) / 2, dr = Math.min(w * .22, h * .2);
+      R(-5, -5, w + 10, 5, "#9097bb"); R(0, -bh, w, bh - 5, "#7d84ab"); R(w * .88, -bh, w * .12, bh - 5, "#6a7098");
+      grid(r, 4, px - 2, -bh + 10, -10, 17, bh * .44, 8, bh * .24, false, false);
+      grid(r, px + pw + 2, w - 4, -bh + 10, -10, 17, bh * .44, 8, bh * .24, false, false);
+      R(px, -bh, pw, bh - 5, "#5f658d");
+      const nc = Math.max(4, Math.round(pw / 15));
+      for (let i = 0; i < nc; i++) { const cx = px + 3 + i * (pw - 12) / (nc - 1); R(cx, -bh + 4, 6, bh - 9, "#b9bfdf"); R(cx + 4, -bh + 4, 2, bh - 9, "#9aa1c6"); }
+      tri(px - 6, -bh, px + pw / 2, -bh - h * .1, px + pw + 6, -bh, "#9ba2c8"); R(px - 6, -bh - 2, pw + 12, 4, "#b9bfdf");
+      const dy = -bh - h * .1; R(w / 2 - dr, dy - h * .08, dr * 2, h * .08 + 2, "#7d84ab");
+      grid(r, w / 2 - dr + 2, w / 2 + dr - 2, dy - h * .08 + 2, dy, 10, h * .08, 4, h * .05, false, false);
+      ctx.fillStyle = "#5c8f97"; ctx.beginPath(); ctx.ellipse(w / 2, dy - h * .08, dr, Math.min(dr * 1.05, h - bh - h * .2), 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "#4c7b84"; ctx.beginPath(); ctx.ellipse(w / 2 + dr * .45, dy - h * .08, dr * .55, Math.min(dr * 1.05, h - bh - h * .2) * .92, 0, Math.PI * 1.5, 0); ctx.fill();
+      R(w / 2 - 3, -h + 4, 6, 8, "#b9bfdf"); R(w / 2 - .7, -h - 6, 1.4, 10, "#b9bfdf");
+    } else if (u.style === "campanile") {
+      const bh = h * .36, tw = Math.max(24, w * .2), tx = w * .68, th = h * .84;
+      R(0, -bh, w, bh, "#8a7f8f"); R(0, -bh - 4, w, 5, "#a8493f"); R(w * .9, -bh, w * .1, bh, "#766c7c");
+      grid(r, 4, w - 4, -bh + 8, -4, 19, bh * .46, 9, bh * .28, true, false, (x, y, a, b) => nearDoor(x, y, a, b) || (x + a > tx - 2 && x < tx + tw + 2));
+      R(tx, -th, tw, th, "#a39aa6"); R(tx + tw * .78, -th, tw * .22, th, "#8a8190");
+      for (let k = 0; k < 3; k++) win(r, tx + 3 + k * (tw - 6) / 3 + 1, -th + 6, (tw - 12) / 3, 20, true);
+      R(tx - 2, -th + 30, tw + 4, 3, "#c3bbc6"); R(tx - 2, -th - 2, tw + 4, 3, "#c3bbc6");
+      ctx.fillStyle = "#f2ead0"; ctx.beginPath(); ctx.arc(tx + tw / 2, -th + 46, tw * .28, 0, 6.3); ctx.fill();
+      R(tx + tw / 2 - .5, -th + 46 - tw * .2, 1, tw * .2, "#333"); R(tx + tw / 2, -th + 45.5, tw * .15, 1, "#333");
+      for (let y = -th + 70; y < -bh - 14; y += 26) win(r, tx + tw / 2 - 2.5, y, 5, 12, false);
+      tri(tx - 1, -th - 2, tx + tw / 2, -h, tx + tw + 1, -th - 2, "#b7554a"); topX = tx + tw / 2;
+    } else if (u.style === "georgian") {
+      const bh = h * .6, rh = h * .13;
+      R(0, -bh, w, bh, "#70404b"); R(w * .9, -bh, w * .1, bh, "#5c343e"); R(-2, -bh - 3, w + 4, 4, "#dcd6e8");
+      ctx.fillStyle = "#2e2b48"; ctx.beginPath(); ctx.moveTo(-3, -bh - 3); ctx.lineTo(w * .12, -bh - rh); ctx.lineTo(w * .88, -bh - rh); ctx.lineTo(w + 3, -bh - 3); ctx.fill();
+      R(w * .16, -bh - rh - 12, 9, 16, "#5c343e"); R(w * .78, -bh - rh - 12, 9, 16, "#5c343e");
+      const cols = Math.max(2, Math.floor((w - 8) / 22)), rows = Math.max(2, Math.floor((bh - 10) / 30));
+      const cw = (w - 8) / cols, ch = (bh - 10) / rows;
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const x = 4 + i * cw + (cw - 10) / 2, y = -bh + 8 + j * ch + (ch - 16) / 2;
+        if (nearDoor(x, y, 10, 16)) { r(); continue; } R(x - 1.5, y - 1.5, 13, 19, "#dcd6e8"); win(r, x, y, 10, 16, false); R(x + 4.5, y, 1, 16, "#70404b"); R(x, y + 7.5, 10, 1, "#70404b"); }
+      const cy = -bh - rh; R(w / 2 - 9, cy - h * .12, 18, h * .12, "#e9e4f2"); win(r, w / 2 - 3, cy - h * .1, 6, h * .07, true);
+      ctx.fillStyle = "#5c8f97"; ctx.beginPath(); ctx.ellipse(w / 2, cy - h * .12, 11, Math.max(6, h * .07), 0, Math.PI, 0); ctx.fill();
+      R(w / 2 - .7, -h, 1.4, h * .08, "#e9e4f2");
+      R(dx - dw / 2 - 4, -dh - 6, dw + 8, dh + 6, "#e9e4f2");
+    } else if (u.style === "modern") {
+      const ah = h * .66, bx = w * .42;
+      R(0, -ah, w * .6, ah, "#232d52"); R(bx, -h + 8, w - bx, h - 8, "#2b3762"); R(w * .93, -h + 8, w * .07, h - 8, "#222c50");
+      grid(r, 3, bx - 1, -ah + 6, -dh - 8, 13, 15, 8, 9, false, r() < .5);
+      grid(r, bx + 3, w - 5, -h + 14, -dh - 8, 12, 14, 8, 8, false, true);
+      R(0, -ah - 2, w * .6, 3, "#3d4b7e"); R(bx, -h + 6, w - bx, 3, "#4a5990");
+      R(0, -dh - 6, w, 2, "#3d4b7e");
+      for (let x = 6; x < w - 8; x += 16) { if (Math.abs(x + 5 - dx) < dw / 2 + 9) continue; R(x, -dh - 2, 10, dh, "rgba(169,214,255,.22)"); }
+      topX = w * .76; R(topX - .7, -h - 14, 1.4, 22, "#8b93b8");
+      if (reduce || Math.sin(T / 500 + w) > 0) { ctx.fillStyle = "#ff5a5a"; ctx.beginPath(); ctx.arc(topX, -h - 14, 2, 0, 6.3); ctx.fill(); }
+    } else { // cottage
+      const bh = h * .58;
+      R(0, -bh, w, bh, "#5c4c62"); R(w * .86, -bh, w * .14, bh, "#4b3d51");
+      tri(-6, -bh, w / 2, -h, w + 6, -bh, "#8a4444"); R(w * .68, -h * .9, 8, h * .2, "#4b3d51");
+      win(r, w * .14, -bh + 12, 12, 12, false); win(r, w * .86 - 12, -bh + 12, 12, 12, false);
+    }
+    if (u.rank === 1 && u.style !== "cottage") { // gold pennant for the world top 25
+      const fy = -h - (u.style === "modern" ? 14 : 6), wave = reduce ? 0 : Math.sin(T / 300 + u.x) * 2;
+      R(topX - .6, fy - 16, 1.2, 16, "#e9e4f2");
+      ctx.fillStyle = CHALK; ctx.beginPath(); ctx.moveTo(topX + .6, fy - 16); ctx.lineTo(topX + 15, fy - 12 + wave); ctx.lineTo(topX + .6, fy - 8); ctx.fill();
+    }
+    drawDoor(u, lit);
+  }
+  function drawDoor(u, glow) {
+    const x = u.doorX - u.doorW / 2, w = u.doorW, h = u.doorH, open = u === cur.u ? door : 0;
+    const arch = u.style === "gothic" ? 2 : (u.style === "modern" || u.style === "cottage") ? 0 : 1;
+    const path = () => { ctx.beginPath(); ctx.moveTo(x, 0);
+      if (arch === 2) { ctx.lineTo(x, -h * .6); ctx.quadraticCurveTo(x, -h * .92, x + w / 2, -h); ctx.quadraticCurveTo(x + w, -h * .92, x + w, -h * .6); }
+      else if (arch === 1) { ctx.lineTo(x, -h + w / 2); ctx.arc(x + w / 2, -h + w / 2, w / 2, Math.PI, 0); }
+      else { ctx.lineTo(x, -h); ctx.lineTo(x + w, -h); }
+      ctx.lineTo(x + w, 0); ctx.closePath(); };
+    if (glow || open) { const g = ctx.createRadialGradient(x + w / 2, -h / 2, 2, x + w / 2, -h / 2, h * (1.1 + open));
+      g.addColorStop(0, `rgba(255,205,120,${.35 + open * .35})`); g.addColorStop(1, "rgba(255,205,120,0)"); ctx.fillStyle = g; ctx.fillRect(x - h * 2, -h * 2.6, w + h * 4, h * 3.4); }
+    ctx.save(); path(); ctx.clip();
+    const g = ctx.createLinearGradient(0, -h, 0, 0); g.addColorStop(0, "#fff6d8"); g.addColorStop(1, "#ffbe62");
+    ctx.fillStyle = g; ctx.fillRect(x, -h, w, h);
+    const lw = (w / 2) * (1 - open * .86), glass = arch === 0 && u.style === "modern";
+    ctx.fillStyle = glass ? "#35508a" : "#3b2416"; ctx.fillRect(x, -h, lw, h); ctx.fillRect(x + w - lw, -h, lw, h);
+    ctx.fillStyle = glass ? "rgba(169,214,255,.35)" : "#56351f";
+    if (lw > 3) { ctx.fillRect(x + lw * .18, -h * .86, lw * .64, h * .36); ctx.fillRect(x + lw * .18, -h * .42, lw * .64, h * .34);
+      ctx.fillRect(x + w - lw * .82, -h * .86, lw * .64, h * .36); ctx.fillRect(x + w - lw * .82, -h * .42, lw * .64, h * .34); }
+    ctx.fillStyle = CHALK; ctx.fillRect(x + lw - 2, -h * .46, 1.2, 2.4); ctx.fillRect(x + w - lw + .8, -h * .46, 1.2, 2.4);
+    ctx.restore();
+    ctx.strokeStyle = glow && !open ? CHALK : "rgba(20,16,40,.7)"; ctx.lineWidth = glow && !open ? 1.6 : 1.2; path(); ctx.stroke();
+  }
+
+  function drawStreet() {
+    const z = cam.z, gy = cam.gy, left = cam.x - W / 2 / z - 40, right = cam.x + W / 2 / z + 40;
+    drawBackRow();
+    // ground
+    const gg = ctx.createLinearGradient(0, gy, 0, H); gg.addColorStop(0, "#1c1f3a"); gg.addColorStop(1, "#0c0e1f");
+    ctx.fillStyle = gg; ctx.fillRect(0, gy, W, H - gy);
+    ctx.fillStyle = "#2c3157"; ctx.fillRect(0, gy, W, Math.max(2, 4 * z));
+    ctx.save(); ctx.translate(W / 2 - cam.x * z, gy); ctx.scale(z, z);
+    for (const u of unis) {
+      if (u.x + u.w < left || u.x > right) continue;
+      const lit = u === hover || u === cur.u;
+      ctx.save(); ctx.translate(u.x, 0); drawBuilding(u, lit); ctx.restore();
+      // lamp in the gap after each building
+      const lx = u.x + u.w + GAP / 2;
+      R(lx - .8, -46, 1.6, 46, "#2a2e52"); R(lx - 4, -47, 8, 2, "#2a2e52");
+      const lg = ctx.createRadialGradient(lx, -44, 1, lx, -44, 34); lg.addColorStop(0, "rgba(255,214,140,.55)"); lg.addColorStop(1, "rgba(255,214,140,0)");
+      ctx.fillStyle = lg; ctx.fillRect(lx - 34, -78, 68, 68);
+      ctx.fillStyle = "#ffe7b0"; ctx.beginPath(); ctx.arc(lx, -44, 2.4, 0, 6.3); ctx.fill();
+      // name plate
+      if (hallMix < .5) {
+        ctx.globalAlpha = 1 - hallMix * 2; ctx.textAlign = "center"; ctx.textBaseline = "top";
+        ctx.font = `800 13px ${DISPLAY}`; ctx.fillStyle = lit ? CHALK : "#eef1fb";
+        const lines = wrap(u.name, u.w + GAP - 10, 2);
+        lines.forEach((l, i) => ctx.fillText(l, u.x + u.w / 2, 12 + i * 15));
+        ctx.font = `500 10.5px ${BODY}`; ctx.fillStyle = "#a9b2d6";
+        ctx.fillText(`${num(u.nLect)} lectures`, u.x + u.w / 2, 14 + lines.length * 15);
+        if (u.walk) { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("✦ Walk inside", u.x + u.w / 2, 29 + lines.length * 15); }
+        else if (lit && state === "street") { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("Open the doors ▸", u.x + u.w / 2, 29 + lines.length * 15); }
+        ctx.globalAlpha = 1;
+      }
+    }
+    ctx.restore();
+  }
+  function drawSteps() { // the plaza in front of the open door, seen close up
+    if (hallMix <= 0) return;
+    const u = cur.u, top = cam.gy, dwS = u.doorW * cam.z, n = 7, cx = sx(u.x + u.doorX);
+    ctx.globalAlpha = hallMix;
+    ctx.fillStyle = "#12152b"; ctx.fillRect(0, top, W, H - top);
+    for (let i = 0; i < n; i++) {
+      const y0 = top + (H - top) * Math.pow(i / n, 1.25), y1 = top + (H - top) * Math.pow((i + 1) / n, 1.25);
+      const half = dwS * 1.1 + (Math.max(W * .62, dwS * 3) - dwS * 1.1) * ((i + 1) / n);
+      const c = 34 + i * 5;
+      ctx.fillStyle = `rgb(${c + 6},${c + 10},${c + 40})`; ctx.fillRect(cx - half, y0, half * 2, y1 - y0);
+      ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.fillRect(cx - half, y1 - Math.max(3, (y1 - y0) * .22), half * 2, Math.max(3, (y1 - y0) * .22));
+    }
+    ctx.globalAlpha = 1;
+    if (door > 0) { // light spilling down the steps
+      ctx.globalCompositeOperation = "lighter";
+      const g = ctx.createLinearGradient(0, top, 0, H); g.addColorStop(0, `rgba(255,196,110,${.42 * door})`); g.addColorStop(1, "rgba(255,196,110,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx - dwS / 2, top); ctx.lineTo(cx + dwS / 2, top); ctx.lineTo(cx + dwS * 2.6, H); ctx.lineTo(cx - dwS * 2.6, H); ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
     }
   }
 
@@ -640,19 +805,32 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   function resize() {
     DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); painted = null;
+    if (state === "street" || state === "load") { cam.z = streetZ(); cam.gy = streetGy(); if (!panned) cam.x = startX(); }
   }
   addEventListener("resize", resize);
+  let last = performance.now();
   function frame(now) {
-    T = now;
+    const dt = Math.min(50, now - last); last = now; T = now;
+    for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i], t = clamp((now - tw.t0) / tw.ms, 0, 1); tw.fn(t); if (t >= 1) { tweens.splice(i, 1); tw.done && tw.done(); } }
+    if (state === "street" && !p.down && Math.abs(panVel) > .05) { cam.x = clamp(cam.x + panVel * dt / 16.7, 0, streetW); panVel *= Math.pow(.93, dt / 16.7); }
     const bg = cur.u && cur.u.roomImg;
     const inRoom = state === "hall" || state === "book" || (state === "walk" && $("walk").classList.contains("on"));
-    if (inRoom && bg) {
-      if (painted !== bg) { // the room is a still picture: paint it once, with the same crop as the stage and the film
+    if (inRoom) { // the room is a still picture: paint it once, plus the fading light of the doorway
+      if (painted !== (bg || 1) || flash > 0) {
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
-        ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh); painted = bg;
+        if (bg) { const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
+          ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh); }
+        else drawSky();
+        painted = bg || 1;
+        if (flash > 0) { ctx.fillStyle = `rgba(255,228,172,${flash})`; ctx.fillRect(0, 0, W, H); painted = null; }
       }
-    } else { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); drawSky(); painted = null; }
+    } else {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      drawSky();
+      if (unis.length) { drawStreet(); drawSteps(); }
+      if (flash > 0) { ctx.fillStyle = `rgba(255,228,172,${flash})`; ctx.fillRect(0, 0, W, H); }
+      painted = null;
+    }
     requestAnimationFrame(frame);
   }
 
@@ -660,7 +838,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   requestAnimationFrame(frame);
   if (document.fonts && document.fonts.load) document.fonts.load(`800 13px ${DISPLAY}`).catch(() => {});
   fetch("courses.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(init)
-    .catch(() => { $("bands").innerHTML = '<p id="none">The catalogue could not load. Check your connection and refresh the page.</p>'; });
+    .catch(() => { $("sub").textContent = "The catalogue could not load. Check your connection and refresh the page."; });
 })();
 </script>
 </body>

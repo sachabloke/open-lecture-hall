@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
-/* Layers, back to front: a canvas (the night street of universities, then the lecture room), the shelf of books,
-   the walk-in film, the heads-up bar, an open book and the lecture player. */
+/* Everything is drawn in one flat cartoon style. Layers, back to front: a canvas (the night street of universities,
+   then a drawn lecture hall), the bookcases of courses by subject, the heads-up bar, an open book and the lecture player. */
 :root {
   --night: #0b1030; --ink: #eef1fb; --muted: #a9b2d6; --chalk: #f3c64d; --panel: rgba(16, 21, 48, .86);
   --line: rgba(255, 255, 255, .16);
@@ -34,45 +34,57 @@ input { width: min(250px, 62vw); font-weight: 500; }
 input::placeholder { color: var(--muted); }
 .foot { max-width: 70ch; margin: 0 auto; padding: 0 16px 60px; color: #cfd5ee; font-size: 13px; text-align: center; }
 
-#walk { position: fixed; inset: 0; z-index: 3; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0;
-  transition: opacity .45s; pointer-events: none; touch-action: none; }
-#walk.on { opacity: 1; pointer-events: auto; cursor: ns-resize; }
-
-/* ---- the lecture hall: a shelf of books over the room ---- */
-#hall { position: fixed; inset: 0; z-index: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  background: linear-gradient(rgba(8, 10, 30, .3), rgba(8, 10, 30, .62) 300px, rgba(8, 10, 30, .78)); }
+/* ---- the lecture hall: one bookcase per subject, every course a book ---- */
+#hall { position: fixed; inset: 0; z-index: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: rgba(14, 11, 38, .5); }
 .hbar { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap;
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
-  background: rgba(8, 10, 30, .86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  background: #120e2e; border-bottom: 3px solid #3a2c5e; }
 .hname { flex: 1 1 240px; min-width: 0; }
 .hname .eyebrow { margin-bottom: 5px; }
 .hname h1 { font: 800 clamp(19px, 3vw, 28px)/1.1 var(--display); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hname p:last-child { margin: 4px 0 0; color: #cfd5ee; font-size: 13.5px; }
-.htools { display: flex; gap: 8px; flex: 1 1 280px; justify-content: flex-end; flex-wrap: wrap; }
+.htools { display: flex; gap: 8px; flex: 0 1 280px; justify-content: flex-end; }
 .htools input { flex: 1 1 160px; max-width: 280px; }
-select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-right: 30px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
-.shelf { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 22px 18px;
-  padding: 24px max(16px, env(safe-area-inset-right)) 90px max(16px, env(safe-area-inset-left)); }
-#cnone { text-align: center; color: #cfd5ee; }
-/* A book: a pale cover texture multiplied with the subject colour, title and lecture count always readable. */
-.bk { position: relative; display: flex; flex-direction: column; aspect-ratio: 3 / 4.1; border: 0; border-radius: 3px 9px 9px 3px;
-  padding: 18px 14px 13px 24px; text-align: left; color: #fff6dc; cursor: pointer; font: inherit; overflow: hidden;
-  background-color: hsl(var(--h) 44% 32%); background-size: 100% 100%; background-blend-mode: multiply;
-  box-shadow: inset 12px 0 14px -10px rgba(0, 0, 0, .65), inset -2px 0 0 rgba(255, 255, 255, .12), 4px 0 0 #e7dcc0, 5px 0 0 #b9ad8e, 0 12px 24px rgba(0, 0, 0, .55);
-  transition: transform .22s cubic-bezier(.2, .7, .2, 1); }
-.bk.c1 { background-image: url(media/books/cover1.jpg); }
-.bk.c2 { background-image: url(media/books/cover2.jpg); }
-.bk::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 2px; background: rgba(0, 0, 0, .3); box-shadow: 1px 0 0 rgba(255, 255, 255, .14); }
-.bk:hover, .bk:focus-visible { transform: translateY(-7px) rotate(-1.2deg); }
+.chips { flex: 1 1 100%; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; font: 700 13px/1 var(--body); color: #fff; background: hsl(var(--h, 235) 42% 30%); border: 2px solid hsl(var(--h, 235) 50% 52%);
+  border-radius: 999px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.chip span { font-weight: 500; opacity: .8; margin-left: 3px; }
+.chip.on { background: var(--chalk); border-color: var(--chalk); color: #1b1430; }
+.chip:focus-visible, .showall:focus-visible { outline: 3px solid var(--chalk); outline-offset: 2px; }
+#shelves { max-width: 1240px; margin: 0 auto; display: grid; gap: 24px;
+  padding: 20px max(16px, env(safe-area-inset-right)) 30px max(16px, env(safe-area-inset-left)); }
+.case { background: #1d1638; border: 3px solid #3a2c5e; border-radius: 16px; padding: 14px 16px 16px; box-shadow: 0 8px 0 rgba(0, 0, 0, .28); }
+.plaque { display: flex; align-items: baseline; gap: 6px 10px; flex-wrap: wrap; margin: 0 0 14px; font: 800 21px/1.15 var(--display); }
+.plaque i { width: 15px; height: 15px; border-radius: 4px; background: hsl(var(--h) 60% 55%); align-self: center; flex: none; }
+.plaque small { font: 500 13px/1.2 var(--body); color: var(--muted); }
+/* the planks are painted behind the grid: one under every 200px row of books */
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); grid-auto-rows: 200px; gap: 34px 16px; padding-bottom: 34px;
+  background: repeating-linear-gradient(to bottom, transparent 0, transparent 200px, #a66f3d 200px, #a66f3d 210px, #6b4526 210px, #6b4526 216px, transparent 216px, transparent 234px); }
+.bk { position: relative; display: flex; flex-direction: column; min-width: 0; border: 2.5px solid #140f2c; border-radius: 4px 10px 10px 4px;
+  padding: 12px 11px 11px 21px; text-align: left; color: #fff; cursor: pointer; font: inherit; overflow: hidden;
+  background: linear-gradient(90deg, hsl(var(--h) 50% 25%) 0, hsl(var(--h) 50% 25%) 11px, hsl(var(--h) 46% 37%) 11px);
+  box-shadow: 4px 0 0 #f4ead0, 6.5px 0 0 #140f2c; transition: transform .2s cubic-bezier(.2, .7, .2, 1); }
+.bk:hover, .bk:focus-visible { transform: translateY(-7px) rotate(-1.5deg); }
 .bk:focus-visible { outline: 3px solid var(--chalk); outline-offset: 3px; }
-.bk b { font: 700 15.5px/1.22 Georgia, "Iowan Old Style", "Times New Roman", serif; text-shadow: 0 1px 2px rgba(0, 0, 0, .65);
-  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
-.bk i { margin-top: 8px; font: 500 12px/1.25 var(--body); font-style: normal; color: #f0e3c2; text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+.bk b { font: 700 15px/1.2 var(--display); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+  overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.bk i { margin-top: 6px; font: 500 12px/1.25 var(--body); font-style: normal; color: rgba(255, 255, 255, .85);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.bk em { margin-top: auto; align-self: flex-start; font: 700 12px/1 var(--body); font-style: normal; color: #ffe9a8;
-  background: rgba(0, 0, 0, .42); border: 1px solid rgba(243, 198, 77, .75); padding: 6px 9px; border-radius: 999px; white-space: nowrap; }
+.bk em { margin-top: auto; align-self: flex-start; font: 700 12px/1 var(--body); font-style: normal; color: #1b1430; background: var(--chalk);
+  padding: 6px 9px; border-radius: 999px; white-space: nowrap; }
+.bk.saved::after { content: ""; position: absolute; top: -3px; right: 12px; width: 16px; height: 30px; background: var(--chalk);
+  border: 2.5px solid #140f2c; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
+.bk.saved b { padding-right: 22px; }
+.bk.done em { background: #7fe0a8; }
+.bk u { position: absolute; left: 11px; bottom: 0; height: 5px; background: var(--chalk); text-decoration: none; }
+#mytools { max-width: 1240px; margin: 0 auto 26px; padding: 0 16px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#mytools button { font: 600 13.5px/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; cursor: pointer; }
+#mytools button:hover { border-color: var(--chalk); }
+#mytools p { flex: 1 1 100%; margin: 0 0 4px; text-align: center; color: #cfd5ee; font-size: 13px; }
+.showall { display: block; margin: 0 auto; font: 700 14px/1 var(--body); color: var(--ink); background: hsl(var(--h) 42% 30%);
+  border: 2px solid hsl(var(--h) 50% 52%); border-radius: 999px; padding: 10px 16px; cursor: pointer; }
+#cnone { text-align: center; color: #cfd5ee; }
 
 /* ---- an open book: the course on the left page, its lectures listed on the right ---- */
 #bookwrap { position: fixed; inset: 0; z-index: 5; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; padding: 14px; background: rgba(5, 7, 22, .74); }
@@ -91,6 +103,10 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
 .bact { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .bact button { background: #2550b8; color: #fff; border-color: transparent; font-size: 15px; padding: 12px 16px; }
 .bact a { color: #2550b8; font-weight: 600; font-size: 14.5px; }
+.bact #bsave { background: transparent; color: #2550b8; border: 2px solid #2550b8; padding: 10px 14px; }
+#bmine { margin: 0 0 12px; color: #1f7a55; font-weight: 700; font-size: 14.5px; }
+#bforget { margin-top: 14px; padding: 0; border: 0; background: none; color: #8a6a2a; font: 500 13px var(--body); text-decoration: underline; cursor: pointer; }
+#blist li.played button { color: #6f6551; }
 #blist { list-style: none; margin: 0; padding: 0; }
 #blist button { display: grid; grid-template-columns: 2.3em 1fr auto; gap: 10px; align-items: baseline; width: 100%; text-align: left;
   padding: 12px 10px 12px 4px; border: 0; border-bottom: 1px solid #e3d8ba; background: transparent; color: #2a2116; cursor: pointer;
@@ -115,7 +131,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   #btitle { font-size: 21px; }
 }
 
-/* ---- controls over the walk-in ---- */
+/* ---- the heads-up bar over the street ---- */
 .hud { position: fixed; z-index: 4; top: 0; left: 0; right: 0; display: flex; gap: 12px 16px; align-items: flex-start; flex-wrap: wrap;
   padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 30px max(16px, env(safe-area-inset-left));
   background: linear-gradient(rgba(8, 10, 30, .9), rgba(8, 10, 30, .5) 62%, transparent); pointer-events: none; }
@@ -141,9 +157,12 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
 #pmedia p { margin: 0; padding: 40px 20px; text-align: center; color: var(--muted); }
 .pfoot { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 12px; flex-wrap: wrap; }
 .pfoot a { color: var(--chalk); font-weight: 600; font-size: 14px; }
+.pfoot .mid { display: flex; gap: 6px 16px; flex-wrap: wrap; justify-content: center; }
 @media (max-width: 560px) {
-  .shelf { grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
-  .bk b { font-size: 14.5px; }
+  .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; }
+  .case { padding: 12px 12px 14px; }
+  .bk b { font-size: 14px; }
+  .plaque { font-size: 19px; }
   .hud { gap: 8px; } .hud button, .btn, input, .pbox button { padding: 9px 12px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .bk { transition: none; } }
@@ -151,7 +170,6 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
 </head>
 <body>
 <canvas id="c" aria-label="A street of university buildings at night. Use the search box to enter a university, or the list view for a plain list."></canvas>
-<video id="walk" muted playsinline preload="none" aria-label="A walk through the university gate and into its lecture hall"></video>
 
 <header class="hud" id="hud">
   <div class="where">
@@ -161,24 +179,29 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   </div>
   <div class="tools">
     <form id="go" autocomplete="off"><input id="q" list="unis" placeholder="Enter a university…" aria-label="Enter a university"><datalist id="unis"></datalist></form>
-    <button type="button" id="skip" hidden>Skip the walk ›</button>
+    <button type="button" id="mine">☆ My shelf</button>
     <a class="btn" href="list.html">List view</a>
   </div>
 </header>
 <p id="hint"><span id="hintText"></span></p>
 
-<section id="hall" hidden aria-label="Courses at this university">
+<section id="hall" hidden aria-label="Courses at this university, by subject">
   <div class="hbar">
-    <button type="button" id="hback">← Universities</button>
+    <button type="button" id="hback">← The street</button>
     <div class="hname"><p class="eyebrow" id="hrank"></p><h1 id="hname"></h1><p id="hsub"></p></div>
-    <div class="htools">
-      <input id="cq" type="search" placeholder="Find a course…" aria-label="Find a course" autocomplete="off">
-      <select id="csub" aria-label="Subject"></select>
-    </div>
+    <div class="htools"><input id="cq" type="search" placeholder="Find a course…" aria-label="Find a course" autocomplete="off"></div>
+    <nav class="chips" id="chips" aria-label="Subjects"></nav>
   </div>
-  <div class="shelf" id="shelf"></div>
+  <div id="shelves"></div>
   <p id="cnone" hidden>No course matches that.</p>
-  <p class="foot">The lecture room and the Berkeley walk-in film are AI-made illustrations, not photographs, and this site is not run by or connected to any university. The lectures are the universities' own free recordings.</p>
+  <div id="mytools" hidden>
+    <p>Your shelf is kept in this browser only. Back it up to move it to another device.</p>
+    <button type="button" id="mybackup">Back up my shelf to a file</button>
+    <button type="button" id="myrestore">Restore from a file</button>
+    <button type="button" id="myclear">Forget everything</button>
+    <input type="file" id="myfile" accept="application/json,.json" hidden>
+  </div>
+  <p class="foot">This site is not run by or connected to any university. The lectures are the universities' own free recordings.</p>
 </section>
 
 <div id="bookwrap" hidden>
@@ -190,7 +213,9 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
       <p id="bwho"></p>
       <p id="bdesc"></p>
       <p id="bcount"></p>
-      <div class="bact"><button type="button" id="bplay" hidden>▶ Play from the start</button><a id="bpage" target="_blank" rel="noopener">Course page ↗</a></div>
+      <p id="bmine"></p>
+      <div class="bact"><button type="button" id="bplay" hidden>▶ Play from the start</button><button type="button" id="bsave">☆ Save to my shelf</button><a id="bpage" target="_blank" rel="noopener">Course page ↗</a></div>
+      <button type="button" id="bforget" hidden>Clear my ticks for this course</button>
     </div>
     <div class="page right" id="bookright">
       <p class="rhead" id="rhead">Lectures</p>
@@ -204,7 +229,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   <div class="pbox">
     <div class="phead"><p id="ptitle"></p><button type="button" id="pclose" aria-label="Close player">✕</button></div>
     <div id="pmedia"></div>
-    <div class="pfoot"><button type="button" id="pprev">← Previous</button><a id="popen" target="_blank" rel="noopener"></a><button type="button" id="pnext">Next →</button></div>
+    <div class="pfoot"><button type="button" id="pprev">← Previous</button><span class="mid"><a id="popen" target="_blank" rel="noopener"></a><a id="pdl" target="_blank" rel="noopener" hidden></a></span><button type="button" id="pnext">Next →</button></div>
   </div>
 </div>
 <script>
@@ -218,9 +243,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   const BODY = '-apple-system, "Segoe UI", Roboto, "Noto Sans", system-ui, sans-serif';
   const LIT = "#ffd27a", DARKWIN = "#161a33", CHALK = "#f3c64d";
   const SHARDS = 128, GAP = 46;
-  // Universities with a filmed walk-in: a short clip from the gate into the hall, ending on that university's room picture.
-  const WALKS = { "UC Berkeley": "media/berkeley/walk.mp4" };
-  let W = 0, H = 0, DPR = 1, T = 0, painted = null;
+  let W = 0, H = 0, DPR = 1, T = 0, painted = false;
 
   // ---------- small helpers ----------
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -234,7 +257,6 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : "#");
   const num = (n) => n.toLocaleString();
   const fold = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  function loadImg(src) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
 
   function fit(text, maxW) { // shorten text to a pixel width with the current ctx.font
     if (ctx.measureText(text).width <= maxW) return text;
@@ -288,11 +310,6 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   // where the street starts: the first building near the left edge, until the visitor moves it
   let panned = false;
   const startX = () => (unis.length ? unis[0].x + unis[0].w / 2 + Math.max(0, W / 2 / streetZ() - unis[0].w / 2 - 60) : 0);
-  function roomFor(u) { // which lecture room picture a university opens into
-    if (u.name === "UC Berkeley") return "berkeley";
-    if (/\b(IIT|IISc|IISER|IIIT|NPTEL|IMSc)\b|Indian|India/i.test(u.name)) return "modern";
-    return { gothic: "oak", cottage: "seminar", modern: "modern" }[u.style] || "classical";
-  }
   function init(d) {
     data = d;
     const m = new Map();
@@ -305,12 +322,14 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
       const c = { title: r[0], who: r[2], subj: r[3], year: r[4], bits: r[5], n: r[6] || 0, url: r[7], feed: r[9], desc: r[10] || "", lid: r[12] || "" };
       u.courses.push(c); u.nLect += c.n || 1;
     });
-    // the street runs from the best-ranked universities to the smallest sources; a filmed walk-in stands first
-    unis = [...m.values()].sort((a, b) => (WALKS[b.name] ? 1 : 0) - (WALKS[a.name] ? 1 : 0) || a.rank - b.rank || b.nLect - a.nLect);
+    // the street runs from the best-ranked universities to the smallest sources; Berkeley, where this collection began, stands first
+    const first = (u) => (u.name === "UC Berkeley" ? 0 : 1);
+    unis = [...m.values()].sort((a, b) => first(a) - first(b) || a.rank - b.rank || b.nLect - a.nLect);
     let x = 80;
     for (const u of unis) {
       const r = rng(hash(u.name));
       u.courses.sort((a, b) => (b.lid ? 1 : 0) - (a.lid ? 1 : 0) || b.n - a.n);
+      for (const c of u.courses) { c.u = u; byKey.set(keyOf(c), c); }
       u.style = styleFor(u);
       const small = u.style === "cottage";
       u.w = Math.round(small ? 84 + r() * 22 : 124 + 30 * Math.log10(1 + u.courses.length) + r() * 22);
@@ -318,22 +337,20 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
       u.doorX = u.style === "campanile" ? u.w * .36 : u.w / 2;
       u.doorW = small ? 16 : u.style === "gothic" ? 26 : 24;
       u.doorH = small ? 28 : u.style === "gothic" ? 44 : 38;
-      u.walk = WALKS[u.name] || "";
-      u.roomSrc = `media/rooms/${roomFor(u)}.jpg`;
       u.x = x; x += u.w + GAP;
     }
     streetW = x + 40;
     $("unis").innerHTML = unis.map((u) => `<option value="${esc(u.name)}">`).join("");
     cam.x = startX();
-    toStreet(true);
+    toStreet(true); refreshMine();
     const want = decodeURIComponent(location.hash.slice(1));
     const u = want && unis.find((v) => v.name === want);
-    if (u) enter(u);
+    if (want === MINE.name) openMine(); else if (u) enter(u);
   }
 
   // ---------- camera and scene state ----------
   const cam = { x: 0, z: 1, gy: 0 };       // world x at screen centre, zoom, screen y of the ground line
-  let state = "load";                       // load | street | zoom | walk | hall | book
+  let state = "load";                       // load | street | zoom | hall | book
   let cur = { u: null, course: null, lectures: null };
   let door = 0, hallMix = 0, flash = 0, panVel = 0, hover = null, streetW = 0;
   const tweens = [];
@@ -350,13 +367,13 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   }
   function setHud(eyebrow, title, sub) { $("hud").hidden = false; $("eyebrow").textContent = eyebrow; $("title").textContent = title; $("sub").textContent = sub || ""; }
   function toStreet(first) {
-    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelf").innerHTML = "";
+    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelves").innerHTML = "";
     state = "street"; cur.u = null; cur.course = null; cur.lectures = null; door = 0; hallMix = 0; flash = 0;
     cam.z = streetZ(); cam.gy = streetGy();
     const total = unis.reduce((s, u) => s + u.nLect, 0);
     setHud("Free university lectures · no sign-up · no payment", "Pick a university. Open its doors.",
       `${num(unis.length)} universities and lecturers · ${num(total)} free lectures inside`);
-    $("go").hidden = false; $("skip").hidden = true;
+    $("go").hidden = false; $("mine").hidden = false;
     hint("Drag the street · tap a building to open its doors");
     if (!first) history.replaceState(null, "", location.pathname + location.search);
   }
@@ -365,12 +382,9 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   function enter(u) {
     if (state !== "street") return;
     state = "zoom"; cur.u = u; panVel = 0; hover = null; panned = true; cv.classList.remove("point");
-    $("hint").style.opacity = 0; $("q").value = ""; $("q").blur(); $("go").hidden = true;
+    $("hint").style.opacity = 0; $("q").value = ""; $("q").blur(); $("go").hidden = true; $("mine").hidden = true;
     setHud("Opening the doors of", u.name, "");
     history.replaceState(null, "", "#" + encodeURIComponent(u.name));
-    if (!u.roomImg) loadImg(u.roomSrc).then((img) => { u.roomImg = img; }); // fetched while the camera flies to the door
-    const film = u.walk && !reduce;
-    if (film) { const v = $("walk"); if (v.getAttribute("src") !== u.walk) { v.src = u.walk; v.load(); } }
     const x0 = cam.x, z0 = cam.z, g0 = cam.gy, tx = u.x + u.doorX;
     const far = Math.abs(tx - x0) * z0 > W * .45;
     const zoomIn = () => {
@@ -379,7 +393,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
         const e = ease(t);
         cam.z = z0 * Math.pow(z1 / z0, e); cam.x = lerp(x1, tx, easeOut(Math.min(1, t * 1.6))); cam.gy = lerp(g0, g1, e);
         hallMix = e; door = ease(clamp((t - .5) / .5, 0, 1));
-      }, () => { if (film) startWalk(u); else throughDoor(u); });
+      }, () => throughDoor(u));
     };
     if (far) tween(clamp(Math.abs(tx - x0) * z0 / 3, 500, 1400), (t) => { cam.x = lerp(x0, tx, ease(t)); }, zoomIn);
     else zoomIn();
@@ -392,14 +406,14 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   }
   function arriveHall() {
     state = "hall"; $("hud").hidden = true; $("hint").style.opacity = 0;
-    buildShelf(cur.u);
     const hall = $("hall"); hall.hidden = false; hall.scrollTop = 0;
+    renderHall(cur.u.mine ? mineHall() : uniHall(cur.u)); layoutCases();
     if (!reduce) { hall.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" }); flyIn(); }
   }
   function leaveHall() { // back out of the doors to the street
     const u = cur.u;
-    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelf").innerHTML = "";
-    if (!u) return toStreet();
+    closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelves").innerHTML = "";
+    if (!u || u.mine) return toStreet();
     state = "zoom"; flash = 0; cur.course = null; cur.lectures = null;
     const z1 = hallDoorH() / u.doorH, g1 = hallGy(), z0 = streetZ(), g0 = streetGy();
     cam.x = u.x + u.doorX; cam.z = z1; cam.gy = g1; hallMix = 1; door = 1;
@@ -407,69 +421,144 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
     tween(800, (t) => { const e = ease(t); cam.z = z1 * Math.pow(z0 / z1, e); cam.gy = lerp(g1, g0, e); hallMix = 1 - e; door = 1 - e; }, () => toStreet());
   }
 
-  // The filmed walk-in. Dragging up or right walks forward, down or left walks back.
-  let walkFinish = null;
-  function startWalk(u) {
-    state = "walk";
-    const v = $("walk"); let done = false;
-    setHud("You are walking into", u.name, ""); $("skip").hidden = false;
-    const finish = () => {
-      if (done) return; done = true; walkFinish = null; $("skip").hidden = true; v.onended = v.onerror = v.oncanplay = null;
-      arriveHall(); v.classList.remove("on"); setTimeout(() => v.pause(), 500);
-    };
-    walkFinish = finish; v.onended = finish; v.onerror = finish;
-    const go = () => { if (done) return; v.oncanplay = null; try { v.currentTime = 0; } catch (e) {} v.classList.add("on"); hint("Drag up to walk in, down to step back"); v.play().catch(finish); };
-    if (v.readyState >= 3) go(); else { v.oncanplay = go; setTimeout(() => { if (!done && v.readyState < 3) finish(); }, 9000); }
+  // ---------- my shelf: what this visitor has watched and saved, kept in this browser only (no sign-in) ----------
+  const STORE = "olh-shelf-v1", MINE = { name: "My shelf", mine: true }, byKey = new Map();
+  let me = { seen: {}, saved: {}, recent: [] };
+  function readMe(j) { return j && typeof j === "object" ? { seen: j.seen && typeof j.seen === "object" ? j.seen : {}, saved: j.saved && typeof j.saved === "object" ? j.saved : {}, recent: Array.isArray(j.recent) ? j.recent : [] } : null; }
+  try { me = readMe(JSON.parse(localStorage.getItem(STORE) || "null")) || me; } catch (e) {}
+  function keyOf(c) { return c.lid || c.url; }
+  function seenOf(c) { const a = me.seen[keyOf(c)]; return Array.isArray(a) ? a : []; }
+  const finished = (c) => !!c.lid && c.n > 0 && seenOf(c).length >= c.n;
+  function saveMe() { try { localStorage.setItem(STORE, JSON.stringify(me)); } catch (e) {} refreshMine(); }
+  function refreshMine() { // count what is on the shelf, per university (shown on the street) and in total
+    for (const u of unis) u.kept = 0;
+    let n = 0;
+    for (const k of new Set([...Object.keys(me.seen).filter((k) => seenOf({ lid: k }).length), ...Object.keys(me.saved)])) { const c = byKey.get(k); if (c) { c.u.kept++; n++; } }
+    $("mine").textContent = n ? `★ My shelf (${num(n)})` : "☆ My shelf";
   }
-  (() => {
-    const v = $("walk"); let scrub = null;
-    v.addEventListener("pointerdown", (e) => { v.setPointerCapture(e.pointerId); scrub = { x: e.clientX, y: e.clientY, t: v.currentTime }; });
-    v.addEventListener("pointermove", (e) => {
-      if (!scrub || !v.duration) return;
-      const d = (e.clientX - scrub.x) - (e.clientY - scrub.y);
-      if (Math.abs(d) > 6) { v.pause(); v.currentTime = clamp(scrub.t + d / Math.max(W, H) * v.duration * 1.3, 0, v.duration - .04); }
-    });
-    const end = () => { if (!scrub) return; scrub = null; if (state === "walk") v.play().catch(() => {}); };
-    v.addEventListener("pointerup", end); v.addEventListener("pointercancel", end);
-    $("skip").onclick = () => walkFinish && walkFinish();
-  })();
+  function markSeen(c, i) {
+    const k = keyOf(c), a = seenOf(c); if (!a.includes(i)) a.push(i); me.seen[k] = a;
+    me.recent = [k, ...me.recent.filter((x) => x !== k)].slice(0, 80); saveMe();
+  }
+  function openMine() {
+    if (state !== "street") return;
+    cur.u = MINE; panVel = 0; hover = null; cv.classList.remove("point");
+    history.replaceState(null, "", "#" + encodeURIComponent(MINE.name));
+    arriveHall();
+  }
+  $("mine").onclick = openMine;
+  $("mybackup").onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(me)], { type: "application/json" })); a.download = "open-lecture-hall-my-shelf.json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $("myrestore").onclick = () => $("myfile").click();
+  $("myfile").onchange = () => {
+    const f = $("myfile").files[0]; if (!f) return;
+    f.text().then((t) => { const j = readMe(JSON.parse(t)); if (!j) throw 0; me = j; saveMe(); renderHall(mineHall()); layoutCases(); })
+      .catch(() => { alert("That file is not a shelf backup from this site."); }).finally(() => { $("myfile").value = ""; });
+  };
+  $("myclear").onclick = () => { if (confirm("Forget every tick and every saved course in this browser?")) { me = { seen: {}, saved: {}, recent: [] }; saveMe(); renderHall(mineHall()); layoutCases(); } };
 
-  // ---------- the lecture hall: every course is a book on the shelf ----------
+  // ---------- the lecture hall: bookcases of courses, every course a book ----------
+  let curList = [], showUni = false, groupFilter = "";   // the books on show; whether covers name the university; the chosen bookcase
   function lecturesLabel(c) {
     if (!c.lid) return "↗ Course page";
     const audio = !(c.bits & 1);
     return `${audio ? "♪" : "▶"} ${num(c.n)} ${audio ? (c.n === 1 ? "recording" : "recordings") : (c.n === 1 ? "lecture" : "lectures")}`;
   }
-  function buildShelf(u) {
-    const band = u.rank === 1 ? "World top 25 · " : u.rank === 2 ? "World top 100 · " : "";
-    $("hrank").textContent = band + "lecture hall";
-    $("hname").textContent = u.name;
-    $("hsub").textContent = `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} · ${num(u.nLect)} lectures. Tap a book to open it.`;
-    const counts = new Map(); u.courses.forEach((c) => counts.set(c.subj, (counts.get(c.subj) || 0) + 1));
-    $("csub").innerHTML = `<option value="">All subjects (${num(u.courses.length)})</option>` +
-      [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => `<option value="${s}">${esc(data.subjects[s])} (${num(n)})</option>`).join("");
-    $("csub").hidden = counts.size < 2; $("cq").value = ""; $("cq").hidden = u.courses.length < 9;
-    $("shelf").innerHTML = u.courses.map((c, i) =>
-      `<button type="button" class="bk c${hash(c.title) % 2 + 1}" style="--h:${HUES[c.subj % HUES.length]}" data-i="${i}" data-s="${c.subj}" data-k="${esc(fold(c.title + " " + c.who))}">` +
-      `<b>${esc(c.title)}</b>${c.who ? `<i>${esc(c.who)}</i>` : ""}<em>${lecturesLabel(c)}</em></button>`).join("");
-    $("cnone").hidden = true;
+  const coverClass = (c) => "bk" + (me.saved[keyOf(c)] ? " saved" : "") + (finished(c) ? " done" : "");
+  function coverInner(c) { // the title, who it is by, and either the lecture count or how far this visitor has got
+    const s = c.lid ? seenOf(c).length : 0, by = showUni ? c.u.name : c.who;
+    const badge = finished(c) ? "✓ Finished" : s ? `▶ ${num(s)} of ${num(c.n)} watched` : lecturesLabel(c);
+    return `<b>${esc(c.title)}</b>${by ? `<i>${esc(by)}</i>` : ""}<em>${badge}</em>` + (s && !finished(c) ? `<u style="width:${clamp(Math.round(100 * s / c.n), 6, 96)}%"></u>` : "");
   }
-  function flyIn() { // the first books burst out of the blackboard and land in their places on the shelf
-    const ox = W / 2, oy = H * .42;
-    [...$("shelf").children].slice(0, 30).forEach((el, i) => {
+  function refreshCover(c) {
+    const i = curList.indexOf(c); if (i < 0) return;
+    for (const el of $("shelves").querySelectorAll(`.bk[data-i="${i}"]`)) { const hid = el.hidden; el.className = coverClass(c); el.innerHTML = coverInner(c); el.hidden = hid; }
+  }
+  // A hall is a list of bookcases: { label, note, hue, list: [courses] }.
+  function uniHall(u) { // one bookcase per subject, biggest first
+    const groups = new Map();
+    for (const c of u.courses) { let g = groups.get(c.subj); if (!g) groups.set(c.subj, g = { subj: c.subj, list: [], n: 0 }); g.list.push(c); g.n += c.n || 1; }
+    const other = data.subjects.indexOf("Other");
+    const order = [...groups.values()].sort((a, b) => (a.subj === other) - (b.subj === other) || b.list.length - a.list.length);
+    const band = u.rank === 1 ? "World top 25 · " : u.rank === 2 ? "World top 100 · " : "";
+    return { eyebrow: band + "lecture hall", title: u.name,
+      sub: `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} in ${num(order.length)} ${order.length === 1 ? "subject" : "subjects"} · ${num(u.nLect)} lectures. Tap a book to open it.`,
+      groups: order.map((g) => ({ label: data.subjects[g.subj], hue: HUES[g.subj % HUES.length], list: g.list,
+        note: `${num(g.list.length)} ${g.list.length === 1 ? "course" : "courses"} · ${num(g.n)} lectures` })) };
+  }
+  function mineHall() { // courses in progress, saved for later, and finished, from every university
+    const all = [...new Set([...Object.keys(me.seen), ...Object.keys(me.saved)])].map((k) => byKey.get(k)).filter(Boolean);
+    const when = (c) => { const i = me.recent.indexOf(keyOf(c)); return i < 0 ? 999 : i; };
+    const going = all.filter((c) => seenOf(c).length && !finished(c)).sort((a, b) => when(a) - when(b));
+    const saved = all.filter((c) => me.saved[keyOf(c)] && !seenOf(c).length);
+    const done = all.filter(finished);
+    const watched = all.reduce((n, c) => n + seenOf(c).length, 0);
+    const note = (l) => `${num(l.length)} ${l.length === 1 ? "course" : "courses"}`;
+    return { mine: true, showUni: true, eyebrow: "Kept in this browser · no sign-in needed", title: MINE.name,
+      sub: all.length ? `${num(watched)} ${watched === 1 ? "lecture" : "lectures"} watched across ${note(all)}.` : "Nothing here yet.",
+      empty: "Your shelf is empty. Open any course and play a lecture, or tap “Save to my shelf” inside a book, and it will be waiting here next time.",
+      groups: [{ label: "Continue watching", hue: 45, list: going, note: note(going) }, { label: "Saved for later", hue: 222, list: saved, note: note(saved) },
+        { label: "Finished", hue: 150, list: done, note: note(done) }].filter((g) => g.list.length) };
+  }
+  function renderHall(h) {
+    $("hrank").textContent = h.eyebrow; $("hname").textContent = h.title; $("hsub").textContent = h.sub;
+    curList = h.groups.flatMap((g) => g.list); showUni = !!h.showUni; groupFilter = "";
+    $("cq").value = ""; $("cq").hidden = curList.length < 9;
+    $("chips").hidden = h.groups.length < 2;
+    $("chips").innerHTML = `<button type="button" class="chip on" data-g="">${h.mine ? "Everything" : "All subjects"}</button>` +
+      h.groups.map((g, gi) => `<button type="button" class="chip" data-g="${gi}" style="--h:${g.hue}">${esc(g.label)}<span>${num(g.list.length)}</span></button>`).join("");
+    let i = 0;
+    $("shelves").innerHTML = h.groups.map((g, gi) =>
+      `<section class="case" data-g="${gi}" data-label="${esc(g.label)}" style="--h:${g.hue}">` +
+      `<h2 class="plaque"><i></i>${esc(g.label)} <small>${esc(g.note)}</small></h2><div class="shelf">` +
+      g.list.map((c) => `<button type="button" class="${coverClass(c)}" style="--h:${HUES[c.subj % HUES.length]}" data-i="${i++}" data-k="${esc(fold(c.title + " " + c.who + " " + (showUni ? c.u.name : "")))}">${coverInner(c)}</button>`).join("") +
+      `</div><button type="button" class="showall" hidden></button></section>`).join("");
+    $("cnone").dataset.empty = curList.length ? "" : (h.empty || "");
+    $("mytools").hidden = !h.mine;
+  }
+  // A bookcase shows its first two rows until it is opened up, searched, or picked on its own from the chips.
+  function layoutCases() {
+    const q = fold($("cq").value.trim()); let any = false;
+    for (const cs of $("shelves").children) {
+      const books = [...cs.querySelectorAll(".bk")];
+      const match = books.filter((el) => !q || el.dataset.k.includes(q));
+      cs.hidden = !!(groupFilter && cs.dataset.g !== groupFilter) || !match.length;
+      if (cs.hidden) continue;
+      any = true;
+      books.forEach((el) => { el.hidden = !match.includes(el); });       // show every match first, to count a row
+      let cols = 0; const top = match[0].offsetTop; for (const el of match) { if (el.offsetTop !== top) break; cols++; }
+      const two = Math.max(cols, 1) * 2, whole = !!q || !!groupFilter || cs.classList.contains("open");
+      if (!whole) match.forEach((el, k) => { el.hidden = k >= two; });
+      const btn = cs.querySelector(".showall");
+      btn.hidden = !!q || !!groupFilter || match.length <= two;
+      btn.textContent = cs.classList.contains("open") ? "Show fewer" : `Show all ${num(match.length)} in ${cs.dataset.label}`;
+    }
+    $("cnone").hidden = any; $("cnone").textContent = $("cnone").dataset.empty || "No course matches that.";
+  }
+  function flyIn() { // the first books burst out of the blackboard and land on their shelves
+    const ox = W / 2, oy = H * .4;
+    [...$("shelves").querySelectorAll(".bk:not([hidden])")].slice(0, 28).forEach((el, i) => {
       const r = el.getBoundingClientRect(); if (r.top > H) return;
       const dx = ox - (r.left + r.width / 2), dy = oy - (r.top + r.height / 2), rot = (Math.random() - .5) * 90;
       el.animate([{ transform: `translate(${dx}px, ${dy}px) scale(.12) rotate(${rot}deg)`, opacity: 0 }, { opacity: 1, offset: .3 }, { transform: "none", opacity: 1 }],
         { duration: 750, delay: 250 + i * 40, easing: "cubic-bezier(.2,.8,.25,1)", fill: "backwards" });
     });
   }
-  function filterShelf() {
-    const q = fold($("cq").value.trim()), s = $("csub").value; let n = 0;
-    for (const el of $("shelf").children) { const ok = (!q || el.dataset.k.includes(q)) && (!s || el.dataset.s === s); el.hidden = !ok; if (ok) n++; }
-    $("cnone").hidden = n > 0;
-  }
-  $("cq").addEventListener("input", filterShelf); $("csub").addEventListener("change", filterShelf);
-  $("shelf").addEventListener("click", (e) => { const el = e.target.closest(".bk"); if (el && state === "hall") openBook(cur.u.courses[+el.dataset.i], el); });
+  $("cq").addEventListener("input", layoutCases);
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    groupFilter = b.dataset.g; [...$("chips").children].forEach((c) => c.classList.toggle("on", c === b));
+    layoutCases(); $("hall").scrollTop = 0;
+  });
+  $("shelves").addEventListener("click", (e) => {
+    const more = e.target.closest(".showall");
+    if (more) { more.parentElement.classList.toggle("open"); layoutCases(); return; }
+    const el = e.target.closest(".bk"); if (el && state === "hall") openBook(curList[+el.dataset.i], el);
+  });
+  addEventListener("resize", () => { if (state === "hall" || state === "book") layoutCases(); });
 
   // ---------- an open book: the course on the left page, its lectures listed on the right ----------
   function lectureTitle(t, i) { // the row already shows its number, so drop a leading "Lecture 12:"
@@ -479,13 +568,14 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   function openBook(c, fromEl) {
     state = "book"; cur.course = c; cur.lectures = null;
     $("book").style.setProperty("--h", HUES[c.subj % HUES.length]);
-    $("buni").textContent = cur.u.name;
+    $("buni").textContent = c.u.name;
     $("btitle").textContent = c.title;
     $("bwho").textContent = [c.who, data.subjects[c.subj], c.year].filter(Boolean).join(" · ");
     $("bdesc").textContent = c.desc;
     $("bpage").href = safeUrl(c.url);
-    $("bplay").hidden = true; $("bcount").textContent = c.lid ? "Finding the lectures…" : "";
+    $("bcount").textContent = c.lid ? "Finding the lectures…" : "";
     $("blist").innerHTML = ""; $("bnote").hidden = true; $("rhead").textContent = c.lid ? "Lectures" : "";
+    bookSide();
     $("bookwrap").hidden = false; $("bookright").scrollTop = 0;
     if (!reduce) {
       const b = $("book").getBoundingClientRect(), r = fromEl ? fromEl.getBoundingClientRect() : b;
@@ -497,42 +587,62 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
     (c.lid ? lecturesFor(c.lid).catch(() => []) : Promise.resolve([])).then((L) => {
       if (cur.course !== c) return;
       cur.lectures = L;
-      const audio = !(c.bits & 1);
+      const audio = !(c.bits & 1), seen = seenOf(c);
       if (!L.length) {
-        $("bcount").textContent = "";
-        $("bnote").hidden = false;
+        $("bcount").textContent = ""; $("bnote").hidden = false;
         $("bnote").innerHTML = `This course keeps its lectures on its own page.<br><a href="${esc(safeUrl(c.url))}" target="_blank" rel="noopener">Open the course page ↗</a>`;
-        return;
+      } else {
+        $("bcount").textContent = `${num(L.length)} ${audio ? (L.length === 1 ? "recording" : "recordings") : (L.length === 1 ? "lecture" : "lectures")}. Tap one to play it.`;
+        $("rhead").textContent = audio ? "Recordings" : "Lectures";
+        $("blist").innerHTML = L.map((l, i) => `<li${seen.includes(i) ? ' class="played"' : ""}><button type="button" data-i="${i}"><span class="num">${i + 1}</span><span>${esc(lectureTitle(l[0], i))}</span><span class="ico">${seen.includes(i) ? "✓" : audio ? "♪" : "▶"}</span></button></li>`).join("");
       }
-      $("bcount").textContent = `${num(L.length)} ${audio ? (L.length === 1 ? "recording" : "recordings") : (L.length === 1 ? "lecture" : "lectures")}. Tap one to play it.`;
-      $("rhead").textContent = audio ? "Recordings" : "Lectures";
-      $("bplay").hidden = false; $("bplay").textContent = audio ? "♪ Play from the start" : "▶ Play from the start";
-      $("blist").innerHTML = L.map((l, i) => `<li><button type="button" data-i="${i}"><span class="num">${i + 1}</span><span>${esc(lectureTitle(l[0], i))}</span><span class="ico">${audio ? "♪" : "▶"}</span></button></li>`).join("");
+      bookSide();
     });
   }
-  function closeBook() { $("bookwrap").hidden = true; cur.course = null; cur.lectures = null; state = "hall"; }
+  function bookSide() { // the progress line and the buttons on the left page
+    const c = cur.course, L = cur.lectures, seen = seenOf(c), audio = !(c.bits & 1);
+    $("bsave").textContent = me.saved[keyOf(c)] ? "★ On my shelf" : "☆ Save to my shelf";
+    $("bforget").hidden = !seen.length;
+    if (!L || !L.length) { $("bplay").hidden = true; $("bmine").textContent = ""; return; }
+    const next = L.findIndex((_, i) => !seen.includes(i)); // the first one not yet ticked
+    $("bplay").hidden = false; $("bplay").dataset.i = next < 0 ? 0 : next;
+    $("bplay").textContent = !seen.length ? (audio ? "♪ Play from the start" : "▶ Play from the start")
+      : next < 0 ? "↺ Start again from the beginning" : `▶ Continue with ${audio ? "recording" : "lecture"} ${next + 1}`;
+    $("bmine").textContent = seen.length ? `✓ You have ${audio ? "heard" : "watched"} ${num(Math.min(seen.length, L.length))} of ${num(L.length)}.` : "";
+  }
+  function closeBook() { $("bookwrap").hidden = true; cur.course = null; cur.lectures = null; state = "hall"; if (cur.u && cur.u.mine) { renderHall(mineHall()); layoutCases(); } }
   $("blist").addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) play(+b.dataset.i); });
-  $("bplay").onclick = () => play(0);
+  $("bplay").onclick = () => play(+$("bplay").dataset.i || 0);
+  $("bsave").onclick = () => { const c = cur.course, k = keyOf(c); if (me.saved[k]) delete me.saved[k]; else me.saved[k] = 1; saveMe(); bookSide(); refreshCover(c); };
+  $("bforget").onclick = () => {
+    const c = cur.course; delete me.seen[keyOf(c)]; saveMe(); bookSide(); refreshCover(c);
+    const audio = !(c.bits & 1); [...$("blist").children].forEach((li) => { li.classList.remove("played", "now"); li.querySelector(".ico").textContent = audio ? "♪" : "▶"; });
+  };
   $("bclose").onclick = closeBook;
   $("bookwrap").addEventListener("click", (e) => { if (e.target === $("bookwrap")) closeBook(); });
 
   // ---------- player ----------
   let playing = -1;
   function play(i) {
-    const L = cur.lectures;
+    const L = cur.lectures, c = cur.course;
     if (!L || !L[i]) return;
     playing = i;
-    const m = media(L[i][1]), title = L[i][0] || "Lecture " + (i + 1);
+    const link = L[i][1], m = media(link), title = L[i][0] || "Lecture " + (i + 1);
     $("ptitle").textContent = `${i + 1}. ${title}`;
     $("popen").href = m.open; $("popen").textContent = `Not playing? Open it on ${m.where} ↗`;
+    // a download is offered only where there is a real file to download: podcast and video files, and Internet Archive items
+    const dl = m.audio || m.video ? [m.open, "Download this file ↓"] : link.startsWith("a:") ? ["https://archive.org/download/" + encodeURIComponent(link.slice(2)), "Download from the Internet Archive ↓"] : null;
+    $("pdl").hidden = !dl; if (dl) { $("pdl").href = dl[0]; $("pdl").textContent = dl[1]; }
     $("pprev").disabled = i === 0; $("pnext").disabled = i === L.length - 1;
     const box = $("pmedia"); box.innerHTML = "";
     let el;
     if (m.embed) { el = document.createElement("iframe"); el.src = m.embed; el.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture"; el.title = title; }
-    else if (m.audio || m.video) { el = document.createElement(m.audio ? "audio" : "video"); el.src = m.audio || m.video; el.controls = true; el.autoplay = true; }
+    else if (m.audio || m.video) { el = document.createElement(m.audio ? "audio" : "video"); el.src = m.audio || m.video; el.controls = true; el.autoplay = true;
+      el.onended = () => { if (playing === i && i < L.length - 1) play(i + 1); }; }
     else { el = document.createElement("p"); el.innerHTML = `This lecture lives on its own page. <a href="${esc(m.open)}" target="_blank" rel="noopener" style="color:#f3c64d">Open it ↗</a>`; }
     box.appendChild(el);
     $("player").hidden = false; $("pclose").focus();
+    markSeen(c, i); bookSide(); refreshCover(c);
     [...$("blist").children].forEach((li, k) => li.classList.toggle("now", k === i));
     const li = $("blist").children[i];
     if (li) { li.classList.add("played"); li.querySelector(".ico").textContent = "✓"; li.scrollIntoView({ block: "nearest" }); }
@@ -546,7 +656,6 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   // ---------- controls ----------
   function goBack() {
     if (!$("player").hidden) return closePlayer();
-    if (state === "walk") { if (walkFinish) walkFinish(); return; }
     if (state === "book") closeBook(); else if (state === "hall") leaveHall();
   }
   $("hback").onclick = goBack;
@@ -773,7 +882,7 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
         lines.forEach((l, i) => ctx.fillText(l, u.x + u.w / 2, 12 + i * 15));
         ctx.font = `500 10.5px ${BODY}`; ctx.fillStyle = "#a9b2d6";
         ctx.fillText(`${num(u.nLect)} lectures`, u.x + u.w / 2, 14 + lines.length * 15);
-        if (u.walk) { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("✦ Walk inside", u.x + u.w / 2, 29 + lines.length * 15); }
+        if (u.kept) { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText(`★ ${u.kept} on my shelf`, u.x + u.w / 2, 29 + lines.length * 15); }
         else if (lit && state === "street") { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("Open the doors ▸", u.x + u.w / 2, 29 + lines.length * 15); }
         ctx.globalAlpha = 1;
       }
@@ -802,9 +911,52 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
   }
 
   // ---------- main loop ----------
+  // The inside of a university, drawn in the same flat style as the street: a wall, a blackboard, windows, lamps and desks.
+  function drawHall() {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#2b2050"); g.addColorStop(1, "#1a1436");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const fy = H * .8;
+    R(0, fy, W, H - fy, "#3a2a3f"); R(0, fy, W, 6, "#55405a");
+    ctx.strokeStyle = "rgba(0,0,0,.22)"; ctx.lineWidth = 2;
+    for (let i = -6; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * W * .06, fy); ctx.lineTo(W / 2 + i * W * .2, H); ctx.stroke(); }
+    const bw = Math.min(W * .78, 760), bh = Math.min(H * .34, bw * .5), bx = (W - bw) / 2, by = H * .2, r = rng(11);
+    ctx.fillStyle = "#7a5230"; rr(bx - 10, by - 10, bw + 20, bh + 20, 8); ctx.fill();
+    ctx.fillStyle = "#1f4038"; rr(bx, by, bw, bh, 4); ctx.fill();
+    R(bx - 10, by + bh + 10, bw + 20, 8, "#5c3d22");
+    ctx.strokeStyle = "rgba(255,255,255,.72)"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath(); // chalk: a wave, a triangle, a circle on its axes
+    for (let i = 0; i <= 40; i++) { const x = bx + bw * (.06 + .26 * i / 40), y = by + bh * .3 + Math.sin(i / 40 * Math.PI * 4) * bh * .12; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+    ctx.moveTo(bx + bw * .42, by + bh * .46); ctx.lineTo(bx + bw * .5, by + bh * .14); ctx.lineTo(bx + bw * .58, by + bh * .46); ctx.closePath();
+    ctx.moveTo(bx + bw * .8 + bh * .18, by + bh * .32); ctx.arc(bx + bw * .8, by + bh * .32, bh * .18, 0, 6.3);
+    ctx.moveTo(bx + bw * .68, by + bh * .32); ctx.lineTo(bx + bw * .92, by + bh * .32); ctx.moveTo(bx + bw * .8, by + bh * .08); ctx.lineTo(bx + bw * .8, by + bh * .56);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.42)"; ctx.beginPath(); // and three lines of chalk writing
+    for (let j = 0; j < 3; j++) { let x = bx + bw * .07; const y = by + bh * (.68 + j * .1);
+      while (x < bx + bw * .9) { const l = bw * (.02 + r() * .06); ctx.moveTo(x, y); ctx.lineTo(x + l, y); x += l + bw * .02; } }
+    ctx.stroke();
+    const ww = Math.min(W * .1, 100), wh = ww * 2.1; // tall windows with the night outside, where there is room beside the board
+    for (const wx of [bx / 2 - ww / 2 - 5, W - bx / 2 - ww / 2 + 5]) {
+      if (bx < ww + 36) break;
+      ctx.fillStyle = "#0d1238"; ctx.beginPath(); ctx.moveTo(wx, by + wh); ctx.lineTo(wx, by + ww / 2); ctx.arc(wx + ww / 2, by + ww / 2, ww / 2, Math.PI, 0); ctx.lineTo(wx + ww, by + wh); ctx.fill();
+      ctx.fillStyle = "#fff"; for (let k = 0; k < 9; k++) ctx.fillRect(wx + 6 + r() * (ww - 12), by + 8 + r() * (wh - 16), 1.6, 1.6);
+      R(wx + ww / 2 - 1.5, by, 3, wh, "#3a2c5e"); R(wx, by + wh * .5, ww, 3, "#3a2c5e");
+    }
+    for (const lx of [W * .25, W * .5, W * .75]) { // hanging lamps
+      R(lx - 1, 0, 2, H * .1, "#110c26");
+      const lg = ctx.createRadialGradient(lx, H * .11, 2, lx, H * .11, H * .22); lg.addColorStop(0, "rgba(255,214,140,.5)"); lg.addColorStop(1, "rgba(255,214,140,0)");
+      ctx.fillStyle = lg; ctx.fillRect(lx - H * .22, H * .11 - H * .22, H * .44, H * .44);
+      ctx.fillStyle = "#f3c64d"; ctx.beginPath(); ctx.moveTo(lx - 16, H * .1 + 12); ctx.lineTo(lx - 7, H * .1); ctx.lineTo(lx + 7, H * .1); ctx.lineTo(lx + 16, H * .1 + 12); ctx.fill();
+    }
+    R(W / 2 - 26, fy - 46, 52, 46, "#5c3d22"); R(W / 2 - 32, fy - 52, 64, 8, "#7a5230"); // the lectern, then rows of desks
+    for (let k = 0; k < 3; k++) for (const s of [-1, 1]) {
+      const dw = W * (.2 + k * .05), y = fy + 14 + k * (H - fy) * .3, x = s < 0 ? W * .04 - k * W * .03 : W * .96 + k * W * .03 - dw;
+      ctx.fillStyle = "#241a33"; rr(x, y, dw, 16, 5); ctx.fill(); R(x + 8, y + 16, 6, 30, "#241a33"); R(x + dw - 14, y + 16, 6, 30, "#241a33");
+    }
+  }
+
   function resize() {
     DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
-    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); painted = null;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); painted = false;
     if (state === "street" || state === "load") { cam.z = streetZ(); cam.gy = streetGy(); if (!panned) cam.x = startX(); }
   }
   addEventListener("resize", resize);
@@ -813,23 +965,18 @@ select { max-width: 100%; appearance: none; -webkit-appearance: none; padding-ri
     const dt = Math.min(50, now - last); last = now; T = now;
     for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i], t = clamp((now - tw.t0) / tw.ms, 0, 1); tw.fn(t); if (t >= 1) { tweens.splice(i, 1); tw.done && tw.done(); } }
     if (state === "street" && !p.down && Math.abs(panVel) > .05) { cam.x = clamp(cam.x + panVel * dt / 16.7, 0, streetW); panVel *= Math.pow(.93, dt / 16.7); }
-    const bg = cur.u && cur.u.roomImg;
-    const inRoom = state === "hall" || state === "book" || (state === "walk" && $("walk").classList.contains("on"));
-    if (inRoom) { // the room is a still picture: paint it once, plus the fading light of the doorway
-      if (painted !== (bg || 1) || flash > 0) {
+    if (state === "hall" || state === "book") { // the hall is a still drawing: paint it once, plus the fading light of the doorway
+      if (!painted || flash > 0) {
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        if (bg) { const k = Math.max(W / bg.naturalWidth, H / bg.naturalHeight), dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
-          ctx.drawImage(bg, (W - dw) / 2, (H - dh) / 2, dw, dh); }
-        else drawSky();
-        painted = bg || 1;
-        if (flash > 0) { ctx.fillStyle = `rgba(255,228,172,${flash})`; ctx.fillRect(0, 0, W, H); painted = null; }
+        drawHall(); painted = true;
+        if (flash > 0) { ctx.fillStyle = `rgba(255,228,172,${flash})`; ctx.fillRect(0, 0, W, H); painted = false; }
       }
     } else {
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       drawSky();
       if (unis.length) { drawStreet(); drawSteps(); }
       if (flash > 0) { ctx.fillStyle = `rgba(255,228,172,${flash})`; ctx.fillRect(0, 0, W, H); }
-      painted = null;
+      painted = false;
     }
     requestAnimationFrame(frame);
   }

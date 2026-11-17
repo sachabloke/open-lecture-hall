@@ -338,7 +338,7 @@ input::placeholder { color: var(--muted); }
     data = d;
     const m = new Map();
     d.rows.forEach((r) => {
-      if (!(r[5] & 3)) return; // only courses with video or audio
+      if (!(r[5] & 3) || !r[12]) return; // only courses whose lectures can be listed and played here (the plain list has the rest)
       const name = d.institutions[r[1]];
       if (/^(unknown|various|multiple|multi-)/i.test(name)) return;
       let u = m.get(name);

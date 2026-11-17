@@ -319,7 +319,22 @@ input::placeholder { color: var(--muted); }
   // where the street starts: the first building near the left edge, until the visitor moves it
   let panned = false;
   const startX = () => (unis.length ? unis[0].x + unis[0].w / 2 + Math.max(0, W / 2 / streetZ() - unis[0].w / 2 - 60) : 0);
-  function init(d) {
+  // Sacha's list: favourite courses, read from picks.json ({title, note, courses: [course id, URL or exact title]}).
+  // When it has courses it stands as its own building at the start of the street and opens like any other hall.
+  function picksBuilding(picks) {
+    if (!picks || !Array.isArray(picks.courses) || !picks.courses.length) return null;
+    const byTitle = new Map(); for (const u of unis) for (const c of u.courses) if (!byTitle.has(fold(c.title))) byTitle.set(fold(c.title), c);
+    const list = [...new Set(picks.courses.map((k) => byKey.get(k) || byTitle.get(fold(String(k)))).filter(Boolean))];
+    if (!list.length) return null;
+    const b = { name: picks.title || "Sacha's list", special: true, virtual: true, rank: 0, courses: list, nLect: list.reduce((n, c) => n + (c.n || 1), 0) };
+    b.build = () => {
+      const groups = new Map(); for (const c of list) { let g = groups.get(c.subj); if (!g) groups.set(c.subj, g = []); g.push(c); }
+      return { showUni: true, title: b.name, sub: picks.note || `${num(list.length)} ${list.length === 1 ? "course" : "courses"}`,
+        groups: [...groups.entries()].sort((a, c) => c[1].length - a[1].length).map(([si, l]) => ({ label: data.subjects[si], hue: HUES[si % HUES.length], list: l, note: `${num(l.length)}` })) };
+    };
+    return b;
+  }
+  function init(d, picks) {
     data = d;
     const m = new Map();
     d.rows.forEach((r) => {
@@ -334,12 +349,15 @@ input::placeholder { color: var(--muted); }
     // the street runs from the best-ranked universities to the smallest sources; Berkeley, where this collection began, stands first
     const first = (u) => (u.name === "UC Berkeley" ? 0 : 1);
     unis = [...m.values()].sort((a, b) => first(a) - first(b) || a.rank - b.rank || b.nLect - a.nLect);
+    for (const u of unis) {
+      u.courses.sort((a, b) => (b.lid ? 1 : 0) - (a.lid ? 1 : 0) || b.n - a.n);
+      for (const c of u.courses) { c.u = u; byKey.set(keyOf(c), c); }
+    }
+    const fav = picksBuilding(picks); if (fav) unis.unshift(fav);
     let x = 80;
     for (const u of unis) {
       const r = rng(hash(u.name));
-      u.courses.sort((a, b) => (b.lid ? 1 : 0) - (a.lid ? 1 : 0) || b.n - a.n);
-      for (const c of u.courses) { c.u = u; byKey.set(keyOf(c), c); }
-      u.style = styleFor(u);
+      u.style = u.special ? "georgian" : styleFor(u);
       const small = u.style === "cottage";
       u.w = Math.round(small ? 84 + r() * 22 : 124 + 30 * Math.log10(1 + u.courses.length) + r() * 22);
       u.h = Math.round(small ? 70 + r() * 20 : 92 + 58 * Math.log10(1 + u.nLect) + r() * 18);
@@ -509,14 +527,14 @@ input::placeholder { color: var(--muted); }
   }
   function subjectHall(si) { // every course in one subject, one bookcase per university, best-ranked first
     const groups = [];
-    for (const u of unis) { const list = u.courses.filter((c) => c.subj === si); if (list.length) groups.push({ label: u.name, hue: HUES[si % HUES.length], list, note: `${num(list.length)}` }); }
+    for (const u of unis) if (!u.special) { const list = u.courses.filter((c) => c.subj === si); if (list.length) groups.push({ label: u.name, hue: HUES[si % HUES.length], list, note: `${num(list.length)}` }); }
     const n = groups.reduce((a, g) => a + g.list.length, 0);
     return { title: data.subjects[si], sub: `${num(n)} ${n === 1 ? "course" : "courses"} · ${num(groups.length)} ${groups.length === 1 ? "university" : "universities"}`,
       allLabel: "All universities", groups };
   }
   function courseMatches(q) {
     const words = fold(q).split(/\s+/).filter(Boolean), out = [];
-    for (const u of unis) for (const c of u.courses) { const k = c.key || (c.key = fold(c.title + " " + c.who)); if (words.every((w) => k.includes(w))) out.push(c); }
+    for (const u of unis) if (!u.special) for (const c of u.courses) { const k = c.key || (c.key = fold(c.title + " " + c.who)); if (words.every((w) => k.includes(w))) out.push(c); }
     return out;
   }
   function searchHall(q) { // courses whose title or lecturer matches, one bookcase per subject
@@ -696,7 +714,7 @@ input::placeholder { color: var(--muted); }
     geology: "earth", climate: "environment", economics: "economics", statistics: "statistics", astronomy: "astronomy", education: "education" };
   let sugg = [], suggOn = -1, subjCount = null;
   function subjectCounts() {
-    if (!subjCount) { subjCount = data.subjects.map(() => 0); for (const u of unis) for (const c of u.courses) subjCount[c.subj]++; }
+    if (!subjCount) { subjCount = data.subjects.map(() => 0); for (const u of unis) if (!u.special) for (const c of u.courses) subjCount[c.subj]++; }
     return subjCount;
   }
   function buildSugg() {
@@ -706,6 +724,8 @@ input::placeholder { color: var(--muted); }
     const subj = data.subjects.map((name, si) => ({ name, si })).filter((x) => x.si !== other && sc[x.si] &&
       (!q || fold(x.name).split(/[^a-z]+/).some((w) => w.startsWith(q) || (SYN[q] && w.startsWith(SYN[q]))) || fold(x.name).includes(q)));
     if (!q) subj.sort((a, b) => sc[b.si] - sc[a.si]);
+    const fav = unis.find((u) => u.special);
+    if (fav && (!q || fold(fav.name).includes(q))) items.push({ head: "Favourites" }, { label: "★ " + fav.name, meta: `${num(fav.courses.length)}`, go: () => enter(fav) });
     if (subj.length) { items.push({ head: "Subjects" }); subj.forEach((x) => items.push({ label: x.name, meta: `${num(sc[x.si])}`, hue: HUES[x.si % HUES.length], go: () => openSubject(x.si) })); }
     if (q) {
       const us = unis.filter((u) => fold(u.name).includes(q)).slice(0, 6);
@@ -900,7 +920,7 @@ input::placeholder { color: var(--muted); }
       tri(-6, -bh, w / 2, -h, w + 6, -bh, "#8a4444"); R(w * .68, -h * .9, 8, h * .2, "#4b3d51");
       win(r, w * .14, -bh + 12, 12, 12, false); win(r, w * .86 - 12, -bh + 12, 12, 12, false);
     }
-    if (u.rank === 1 && u.style !== "cottage") { // gold pennant for the world top 25
+    if (u.rank <= 1 && u.style !== "cottage") { // gold pennant for the world top 25 and for Sacha's list
       const fy = -h - (u.style === "modern" ? 14 : 6), wave = reduce ? 0 : Math.sin(T / 300 + u.x) * 2;
       R(topX - .6, fy - 16, 1.2, 16, "#e9e4f2");
       ctx.fillStyle = CHALK; ctx.beginPath(); ctx.moveTo(topX + .6, fy - 16); ctx.lineTo(topX + 15, fy - 12 + wave); ctx.lineTo(topX + .6, fy - 8); ctx.fill();
@@ -955,7 +975,7 @@ input::placeholder { color: var(--muted); }
         const lines = wrap(u.name, u.w + GAP - 10, 2);
         lines.forEach((l, i) => ctx.fillText(l, u.x + u.w / 2, 12 + i * 15));
         ctx.font = `500 10.5px ${BODY}`; ctx.fillStyle = "#a9b2d6";
-        ctx.fillText(`${num(u.nLect)} lectures`, u.x + u.w / 2, 14 + lines.length * 15);
+        ctx.fillText(u.special ? `★ ${num(u.courses.length)} favourite ${u.courses.length === 1 ? "course" : "courses"}` : `${num(u.nLect)} lectures`, u.x + u.w / 2, 14 + lines.length * 15);
         if (u.kept) { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText(`★ ${u.kept} on my shelf`, u.x + u.w / 2, 29 + lines.length * 15); }
         else if (lit && state === "street") { ctx.font = `700 10.5px ${BODY}`; ctx.fillStyle = CHALK; ctx.fillText("Open the doors ▸", u.x + u.w / 2, 29 + lines.length * 15); }
         ctx.globalAlpha = 1;
@@ -1058,7 +1078,8 @@ input::placeholder { color: var(--muted); }
   resize();
   requestAnimationFrame(frame);
   if (document.fonts && document.fonts.load) document.fonts.load(`800 13px ${DISPLAY}`).catch(() => {});
-  fetch("courses.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(init)
+  const picksP = fetch("picks.json", { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  fetch("courses.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => picksP.then((pk) => init(d, pk)))
     .catch(() => { $("title").textContent = "Could not load. Check your connection and refresh."; });
 })();
 </script>

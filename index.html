@@ -24,7 +24,6 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; t
 canvas.point { cursor: pointer; }
 canvas.grabbing { cursor: grabbing; }
 
-.eyebrow { font: 600 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--chalk); margin: 0 0 8px; }
 .hud button, .btn, input, select, .pbox button, .hbar button, .bact button { font: 600 14px/1 var(--body); color: var(--ink); background: var(--panel);
   border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; text-decoration: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .hud button, .pbox button, .hbar button, .bact button, select { cursor: pointer; }
@@ -40,7 +39,6 @@ input::placeholder { color: var(--muted); }
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
   background: #120e2e; border-bottom: 3px solid #3a2c5e; }
 .hname { flex: 1 1 240px; min-width: 0; }
-.hname .eyebrow { margin-bottom: 5px; }
 .hname h1 { font: 800 clamp(19px, 3vw, 28px)/1.1 var(--display); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hname p:last-child { margin: 4px 0 0; color: #cfd5ee; font-size: 13.5px; }
 .htools { display: flex; gap: 8px; flex: 0 1 280px; justify-content: flex-end; }
@@ -134,21 +132,29 @@ input::placeholder { color: var(--muted); }
   #btitle { font-size: 21px; }
 }
 
-/* ---- the heads-up bar over the street ---- */
-.hud { position: fixed; z-index: 4; top: 0; left: 0; right: 0; display: flex; gap: 12px 16px; align-items: flex-start; flex-wrap: wrap;
-  padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 30px max(16px, env(safe-area-inset-left));
-  background: linear-gradient(rgba(8, 10, 30, .9), rgba(8, 10, 30, .5) 62%, transparent); pointer-events: none; }
+/* ---- the bar over the street: name, one search box, my shelf, a small menu ---- */
+.hud { position: fixed; z-index: 4; top: 0; left: 0; right: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 26px max(14px, env(safe-area-inset-left));
+  background: linear-gradient(rgba(8, 10, 30, .92), rgba(8, 10, 30, .5) 70%, transparent); pointer-events: none; }
 .hud > * { pointer-events: auto; }
-.where { flex: 1 1 260px; min-width: 0; pointer-events: none; }
-.where h1 mark { background: linear-gradient(transparent 58%, rgba(243, 198, 77, .55) 58%); color: inherit; }
-.where h1 { font: 800 clamp(20px, 3.4vw, 34px)/1.08 var(--display); margin: 0; letter-spacing: -.01em; text-wrap: balance;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-#sub { margin: 6px 0 0; color: #cfd5ee; font-size: 13.5px; }
-#sub a { color: var(--chalk); pointer-events: auto; }
-.tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-#hint { position: fixed; z-index: 4; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); margin: 0; text-align: center;
-  font-size: 13px; pointer-events: none; transition: opacity .4s; padding: 0 16px; opacity: 0; }
-#hint span { display: inline-block; padding: 7px 14px; border-radius: 999px; background: rgba(11, 16, 48, .82); color: var(--ink); border: 1px solid var(--line); }
+#title { flex: 1 1 auto; min-width: 0; margin: 0; font: 800 clamp(19px, 2.6vw, 26px)/1.1 var(--display); letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+#go { position: relative; flex: 0 1 360px; margin: 0; }
+#go input { width: 100%; padding-left: 36px; background-image: radial-gradient(circle at 13px 13px, transparent 5px, var(--muted) 5.5px, var(--muted) 7px, transparent 7.5px);
+  background-repeat: no-repeat; background-position: 6px 6px; }
+#sugg { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 5; margin: 0; padding: 6px; list-style: none; max-height: min(64vh, 520px); overflow-y: auto;
+  background: #161b3d; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55); }
+#sugg li.head { padding: 10px 10px 4px; font: 700 11px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+#sugg button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; padding: 10px; background: transparent;
+  color: var(--ink); font: 600 15px/1.25 var(--body); cursor: pointer; }
+#sugg button i { width: 12px; height: 12px; border-radius: 3px; flex: none; background: hsl(var(--h, 235) 60% 55%); }
+#sugg button span { flex: 1; min-width: 0; }
+#sugg button small { color: var(--muted); font-weight: 500; font-size: 13px; white-space: nowrap; }
+#sugg button.on, #sugg button:hover { background: #262c5a; }
+#menupop { position: absolute; top: calc(100% - 18px); right: max(14px, env(safe-area-inset-right)); display: grid; gap: 2px; padding: 6px; min-width: 180px;
+  background: #161b3d; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55); }
+#menupop a { color: var(--ink); text-decoration: none; padding: 10px 12px; border-radius: 8px; font-weight: 600; font-size: 14.5px; }
+#menupop a:hover { background: #262c5a; }
 #player { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; background: rgba(5, 7, 22, .8); }
 .pbox { width: min(920px, 100%); background: #131937; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
   box-shadow: 0 24px 80px rgba(0, 0, 0, .6); }
@@ -166,33 +172,31 @@ input::placeholder { color: var(--muted); }
   .case { padding: 12px 12px 14px; }
   .bk b { font-size: 14px; }
   .plaque { font-size: 19px; }
-  .hud { gap: 8px; } .hud button, .btn, input, .pbox button { padding: 9px 12px; font-size: 13px; }
+  .hud button, .btn, input, .pbox button { padding: 9px 12px; font-size: 13px; }
+  #go { order: 5; flex: 1 1 100%; }
+  #go input { font-size: 16px; } /* 16px stops iPhone zooming in on the box */
 }
 @media (prefers-reduced-motion: reduce) { .bk { transition: none; } }
 </style>
 </head>
 <body>
-<canvas id="c" aria-label="A street of university buildings at night. Use the search box to enter a university, or the list view for a plain list."></canvas>
+<canvas id="c" aria-label="A street of university buildings at night. Tap a building, or search for a university, subject or course."></canvas>
 
 <header class="hud" id="hud">
-  <div class="where">
-    <p class="eyebrow" id="eyebrow">Free university lectures · no sign-up · no payment</p>
-    <h1 id="title">Open Lecture Hall</h1>
-    <p id="sub">Lighting the windows…</p>
-  </div>
-  <div class="tools">
-    <form id="go" autocomplete="off"><input id="q" list="unis" placeholder="Enter a university…" aria-label="Enter a university"><datalist id="unis"></datalist></form>
-    <button type="button" id="mine">☆ My shelf</button>
-    <a class="btn" href="list.html">List view</a>
-    <a class="btn" href="about.html">About & rights</a>
-  </div>
+  <h1 id="title">Open Lecture Hall</h1>
+  <form id="go" role="search" autocomplete="off">
+    <input id="q" type="search" placeholder="University, subject or course" aria-label="Search for a university, subject or course" aria-controls="sugg" aria-expanded="false" enterkeyhint="search">
+    <ul id="sugg" role="listbox" hidden></ul>
+  </form>
+  <button type="button" id="mine">☆ My shelf</button>
+  <button type="button" id="menu" aria-label="More" aria-expanded="false" aria-controls="menupop">⋯</button>
+  <nav id="menupop" hidden><a href="list.html">Plain list of every course</a><a href="about.html">About & rights</a></nav>
 </header>
-<p id="hint"><span id="hintText"></span></p>
 
 <section id="hall" hidden aria-label="Courses at this university, by subject">
   <div class="hbar">
     <button type="button" id="hback">← The street</button>
-    <div class="hname"><p class="eyebrow" id="hrank"></p><h1 id="hname"></h1><p id="hsub"></p></div>
+    <div class="hname"><h1 id="hname"></h1><p id="hsub"></p></div>
     <div class="htools"><input id="cq" type="search" placeholder="Find a course…" aria-label="Find a course" autocomplete="off"></div>
     <nav class="chips" id="chips" aria-label="Subjects"></nav>
   </div>
@@ -345,12 +349,14 @@ input::placeholder { color: var(--muted); }
       u.x = x; x += u.w + GAP;
     }
     streetW = x + 40;
-    $("unis").innerHTML = unis.map((u) => `<option value="${esc(u.name)}">`).join("");
     cam.x = startX();
     toStreet(true); refreshMine();
     const want = decodeURIComponent(location.hash.slice(1));
     const u = want && unis.find((v) => v.name === want);
-    if (want === MINE.name) openMine(); else if (u) enter(u);
+    if (want === MINE.name) openMine();
+    else if (want.startsWith("subject:")) { const si = data.subjects.indexOf(want.slice(8)); if (si >= 0) openSubject(si); }
+    else if (want.startsWith("search:")) openSearch(want.slice(7));
+    else if (u) enter(u);
   }
 
   // ---------- camera and scene state ----------
@@ -365,21 +371,13 @@ input::placeholder { color: var(--muted); }
   const hallDoorH = () => clamp(H * .26, 120, 230);
   const hallGy = () => Math.round(H * .47);
   const sx = (wx) => (wx - cam.x) * cam.z + W / 2;
-  let hintTimer = 0;
-  function hint(text) { // show a hint, then let it fade
-    $("hintText").textContent = text; $("hint").style.opacity = 1;
-    clearTimeout(hintTimer); hintTimer = setTimeout(() => { $("hint").style.opacity = 0; }, 6000);
-  }
-  function setHud(eyebrow, title, sub) { $("hud").hidden = false; $("eyebrow").textContent = eyebrow; $("title").textContent = title; $("sub").textContent = sub || ""; }
+  function setHud(title) { $("hud").hidden = false; $("title").textContent = title; }
+  function streetTools(on) { for (const id of ["go", "mine", "menu"]) $(id).hidden = !on; $("menupop").hidden = true; closeSugg(); }
   function toStreet(first) {
     closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelves").innerHTML = "";
     state = "street"; cur.u = null; cur.course = null; cur.lectures = null; door = 0; hallMix = 0; flash = 0;
     cam.z = streetZ(); cam.gy = streetGy();
-    const total = unis.reduce((s, u) => s + u.nLect, 0);
-    setHud("Free university lectures · no sign-up · no payment", "Pick a university. Open its doors.",
-      `${num(unis.length)} universities and lecturers · ${num(total)} free lectures inside`);
-    $("go").hidden = false; $("mine").hidden = false;
-    hint("Drag the street · tap a building to open its doors");
+    setHud("Open Lecture Hall"); streetTools(true);
     if (!first) history.replaceState(null, "", location.pathname + location.search);
   }
 
@@ -387,8 +385,8 @@ input::placeholder { color: var(--muted); }
   function enter(u) {
     if (state !== "street") return;
     state = "zoom"; cur.u = u; panVel = 0; hover = null; panned = true; cv.classList.remove("point");
-    $("hint").style.opacity = 0; $("q").value = ""; $("q").blur(); $("go").hidden = true; $("mine").hidden = true;
-    setHud("Opening the doors of", u.name, "");
+    $("q").value = ""; $("q").blur(); streetTools(false);
+    setHud(u.name);
     history.replaceState(null, "", "#" + encodeURIComponent(u.name));
     const x0 = cam.x, z0 = cam.z, g0 = cam.gy, tx = u.x + u.doorX;
     const far = Math.abs(tx - x0) * z0 > W * .45;
@@ -410,24 +408,24 @@ input::placeholder { color: var(--muted); }
       () => { arriveHall(); tween(700, (t) => { flash = 1 - t; }); });
   }
   function arriveHall() {
-    state = "hall"; $("hud").hidden = true; $("hint").style.opacity = 0;
+    state = "hall"; $("hud").hidden = true;
     const hall = $("hall"); hall.hidden = false; hall.scrollTop = 0;
-    renderHall(cur.u.mine ? mineHall() : uniHall(cur.u)); layoutCases();
+    renderHall(cur.u.virtual ? cur.u.build() : uniHall(cur.u)); layoutCases();
     if (!reduce) { hall.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: "ease-out" }); flyIn(); }
   }
   function leaveHall() { // back out of the doors to the street
     const u = cur.u;
     closePlayer(); $("bookwrap").hidden = true; $("hall").hidden = true; $("shelves").innerHTML = "";
-    if (!u || u.mine) return toStreet();
+    if (!u || u.virtual) return toStreet();
     state = "zoom"; flash = 0; cur.course = null; cur.lectures = null;
     const z1 = hallDoorH() / u.doorH, g1 = hallGy(), z0 = streetZ(), g0 = streetGy();
     cam.x = u.x + u.doorX; cam.z = z1; cam.gy = g1; hallMix = 1; door = 1;
-    setHud("Leaving", u.name, "");
+    setHud(u.name);
     tween(800, (t) => { const e = ease(t); cam.z = z1 * Math.pow(z0 / z1, e); cam.gy = lerp(g1, g0, e); hallMix = 1 - e; door = 1 - e; }, () => toStreet());
   }
 
   // ---------- my shelf: what this visitor has watched and saved, kept in this browser only (no sign-in) ----------
-  const STORE = "olh-shelf-v1", MINE = { name: "My shelf", mine: true }, byKey = new Map();
+  const STORE = "olh-shelf-v1", MINE = { name: "My shelf", virtual: true, mine: true, build: () => mineHall() }, byKey = new Map();
   let me = { seen: {}, saved: {}, recent: [] };
   function readMe(j) { return j && typeof j === "object" ? { seen: j.seen && typeof j.seen === "object" ? j.seen : {}, saved: j.saved && typeof j.saved === "object" ? j.saved : {}, recent: Array.isArray(j.recent) ? j.recent : [] } : null; }
   try { me = readMe(JSON.parse(localStorage.getItem(STORE) || "null")) || me; } catch (e) {}
@@ -445,12 +443,14 @@ input::placeholder { color: var(--muted); }
     const k = keyOf(c), a = seenOf(c); if (!a.includes(i)) a.push(i); me.seen[k] = a;
     me.recent = [k, ...me.recent.filter((x) => x !== k)].slice(0, 80); saveMe();
   }
-  function openMine() {
+  // A hall that is not a building (my shelf, a subject, a search) opens straight from the street, no doors.
+  function openVirtual(v, hash) {
     if (state !== "street") return;
-    cur.u = MINE; panVel = 0; hover = null; cv.classList.remove("point");
-    history.replaceState(null, "", "#" + encodeURIComponent(MINE.name));
+    cur.u = v; panVel = 0; hover = null; cv.classList.remove("point"); $("q").value = ""; $("q").blur(); closeSugg();
+    history.replaceState(null, "", "#" + encodeURIComponent(hash));
     arriveHall();
   }
+  const openMine = () => openVirtual(MINE, MINE.name);
   $("mine").onclick = openMine;
   $("mybackup").onclick = () => {
     const a = document.createElement("a");
@@ -488,9 +488,8 @@ input::placeholder { color: var(--muted); }
     for (const c of u.courses) { let g = groups.get(c.subj); if (!g) groups.set(c.subj, g = { subj: c.subj, list: [], n: 0 }); g.list.push(c); g.n += c.n || 1; }
     const other = data.subjects.indexOf("Other");
     const order = [...groups.values()].sort((a, b) => (a.subj === other) - (b.subj === other) || b.list.length - a.list.length);
-    const band = u.rank === 1 ? "World top 25 · " : u.rank === 2 ? "World top 100 · " : "";
-    return { eyebrow: band + "lecture hall", title: u.name,
-      sub: `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} in ${num(order.length)} ${order.length === 1 ? "subject" : "subjects"} · ${num(u.nLect)} lectures. Tap a book to open it.`,
+    return { title: u.name,
+      sub: `${num(u.courses.length)} ${u.courses.length === 1 ? "course" : "courses"} · ${num(order.length)} ${order.length === 1 ? "subject" : "subjects"}`,
       groups: order.map((g) => ({ label: data.subjects[g.subj], hue: HUES[g.subj % HUES.length], list: g.list,
         note: `${num(g.list.length)} ${g.list.length === 1 ? "course" : "courses"} · ${num(g.n)} lectures` })) };
   }
@@ -502,18 +501,40 @@ input::placeholder { color: var(--muted); }
     const done = all.filter(finished);
     const watched = all.reduce((n, c) => n + seenOf(c).length, 0);
     const note = (l) => `${num(l.length)} ${l.length === 1 ? "course" : "courses"}`;
-    return { mine: true, showUni: true, eyebrow: "Kept in this browser · no sign-in needed", title: MINE.name,
-      sub: all.length ? `${num(watched)} ${watched === 1 ? "lecture" : "lectures"} watched across ${note(all)}.` : "Nothing here yet.",
-      empty: "Your shelf is empty. Open any course and play a lecture, or tap “Save to my shelf” inside a book, and it will be waiting here next time.",
+    return { mine: true, showUni: true, title: MINE.name,
+      sub: all.length ? `${num(watched)} ${watched === 1 ? "lecture" : "lectures"} watched` : "",
+      allLabel: "Everything", empty: "Your shelf is empty. Open any course and play a lecture, or tap “Save to my shelf” inside a book, and it will be waiting here next time.",
       groups: [{ label: "Continue watching", hue: 45, list: going, note: note(going) }, { label: "Saved for later", hue: 222, list: saved, note: note(saved) },
         { label: "Finished", hue: 150, list: done, note: note(done) }].filter((g) => g.list.length) };
   }
+  function subjectHall(si) { // every course in one subject, one bookcase per university, best-ranked first
+    const groups = [];
+    for (const u of unis) { const list = u.courses.filter((c) => c.subj === si); if (list.length) groups.push({ label: u.name, hue: HUES[si % HUES.length], list, note: `${num(list.length)}` }); }
+    const n = groups.reduce((a, g) => a + g.list.length, 0);
+    return { title: data.subjects[si], sub: `${num(n)} ${n === 1 ? "course" : "courses"} · ${num(groups.length)} ${groups.length === 1 ? "university" : "universities"}`,
+      allLabel: "All universities", groups };
+  }
+  function courseMatches(q) {
+    const words = fold(q).split(/\s+/).filter(Boolean), out = [];
+    for (const u of unis) for (const c of u.courses) { const k = c.key || (c.key = fold(c.title + " " + c.who)); if (words.every((w) => k.includes(w))) out.push(c); }
+    return out;
+  }
+  function searchHall(q) { // courses whose title or lecturer matches, one bookcase per subject
+    const found = courseMatches(q), groups = new Map();
+    for (const c of found) { let g = groups.get(c.subj); if (!g) groups.set(c.subj, g = []); g.push(c); }
+    const order = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+    return { showUni: true, title: `“${q}”`, sub: `${num(found.length)} ${found.length === 1 ? "course" : "courses"}`, empty: `No course title matches “${q}”.`,
+      groups: order.map(([si, list]) => ({ label: data.subjects[si], hue: HUES[si % HUES.length], list, note: `${num(list.length)}` })) };
+  }
+  function openSubject(si) { openVirtual({ name: data.subjects[si], virtual: true, build: () => subjectHall(si) }, "subject:" + data.subjects[si]); }
+  function openSearch(q) { q = q.trim(); if (q) openVirtual({ name: q, virtual: true, build: () => searchHall(q) }, "search:" + q); }
+
   function renderHall(h) {
-    $("hrank").textContent = h.eyebrow; $("hname").textContent = h.title; $("hsub").textContent = h.sub;
+    $("hname").textContent = h.title; $("hsub").textContent = h.sub;
     curList = h.groups.flatMap((g) => g.list); showUni = !!h.showUni; groupFilter = "";
     $("cq").value = ""; $("cq").hidden = curList.length < 9;
     $("chips").hidden = h.groups.length < 2;
-    $("chips").innerHTML = `<button type="button" class="chip on" data-g="">${h.mine ? "Everything" : "All subjects"}</button>` +
+    $("chips").innerHTML = `<button type="button" class="chip on" data-g="">${h.allLabel || "All subjects"}</button>` +
       h.groups.map((g, gi) => `<button type="button" class="chip" data-g="${gi}" style="--h:${g.hue}">${esc(g.label)}<span>${num(g.list.length)}</span></button>`).join("");
     let i = 0;
     $("shelves").innerHTML = h.groups.map((g, gi) =>
@@ -667,14 +688,59 @@ input::placeholder { color: var(--muted); }
     if (state === "book") closeBook(); else if (state === "hall") leaveHall();
   }
   $("hback").onclick = goBack;
-  function findUni() {
-    const q = fold($("q").value.trim()); if (!q || !unis.length || state !== "street") return;
-    const u = unis.find((v) => fold(v.name) === q) || unis.find((v) => fold(v.name).includes(q));
-    if (!u) { $("q").value = ""; $("q").placeholder = "No university by that name"; return; }
-    enter(u);
+  // One box for everything. Empty: the list of subjects. Typing: matching subjects, universities and a course search.
+  const SYN = { maths: "math", math: "mathematics", physics: "physics", medicine: "medicine", programming: "computer", coding: "computer",
+    computing: "computer", ai: "computer", business: "business", finance: "economics", politics: "politics", law: "law", music: "music",
+    art: "arts", literature: "literature", english: "literature", languages: "languages", religion: "religion", philosophy: "philosophy",
+    history: "history", chemistry: "chemistry", biology: "biology", engineering: "engineering", psychology: "psychology", environment: "environment",
+    geology: "earth", climate: "environment", economics: "economics", statistics: "statistics", astronomy: "astronomy", education: "education" };
+  let sugg = [], suggOn = -1, subjCount = null;
+  function subjectCounts() {
+    if (!subjCount) { subjCount = data.subjects.map(() => 0); for (const u of unis) for (const c of u.courses) subjCount[c.subj]++; }
+    return subjCount;
   }
-  $("go").addEventListener("submit", (e) => { e.preventDefault(); findUni(); });
-  $("q").addEventListener("change", findUni);
+  function buildSugg() {
+    if (!data) return;
+    const raw = $("q").value.trim(), q = fold(raw), sc = subjectCounts(), items = [];
+    const other = data.subjects.indexOf("Other");
+    const subj = data.subjects.map((name, si) => ({ name, si })).filter((x) => x.si !== other && sc[x.si] &&
+      (!q || fold(x.name).split(/[^a-z]+/).some((w) => w.startsWith(q) || (SYN[q] && w.startsWith(SYN[q]))) || fold(x.name).includes(q)));
+    if (!q) subj.sort((a, b) => sc[b.si] - sc[a.si]);
+    if (subj.length) { items.push({ head: "Subjects" }); subj.forEach((x) => items.push({ label: x.name, meta: `${num(sc[x.si])}`, hue: HUES[x.si % HUES.length], go: () => openSubject(x.si) })); }
+    if (q) {
+      const us = unis.filter((u) => fold(u.name).includes(q)).slice(0, 6);
+      if (us.length) { items.push({ head: "Universities" }); us.forEach((u) => items.push({ label: u.name, meta: `${num(u.courses.length)}`, go: () => enter(u) })); }
+      if (q.length >= 3) { const n = courseMatches(raw).length;
+        if (n) items.push({ head: "Courses" }, { label: `Courses about “${raw}”`, meta: `${num(n)}`, go: () => openSearch(raw) }); }
+      if (!items.length) items.push({ head: "Nothing matches" });
+    }
+    sugg = items; suggOn = items.findIndex((x) => !x.head);
+    $("sugg").innerHTML = items.map((x, i) => x.head ? `<li class="head" role="presentation">${esc(x.head)}</li>` :
+      `<li role="presentation"><button type="button" role="option" data-i="${i}"${x.hue !== undefined ? ` style="--h:${x.hue}"` : ""}>${x.hue !== undefined ? "<i></i>" : ""}<span>${esc(x.label)}</span><small>${x.meta}</small></button></li>`).join("");
+    $("sugg").hidden = false; $("q").setAttribute("aria-expanded", "true"); markSugg();
+  }
+  function markSugg() { $("sugg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.i === suggOn)); }
+  function closeSugg() { $("sugg").hidden = true; $("q").setAttribute("aria-expanded", "false"); }
+  function pick(i) { const x = sugg[i]; if (!x || x.head || state !== "street") return; closeSugg(); x.go(); }
+  $("q").addEventListener("focus", buildSugg);
+  $("q").addEventListener("click", () => { if ($("sugg").hidden) buildSugg(); }); // a tap opens the list even when focus events are skipped
+  $("q").addEventListener("input", buildSugg);
+  $("q").addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); if ($("sugg").hidden) buildSugg();
+      const opts = sugg.map((x, i) => (x.head ? -1 : i)).filter((i) => i >= 0); if (!opts.length) return;
+      const k = opts.indexOf(suggOn); suggOn = opts[(k + (e.key === "ArrowDown" ? 1 : opts.length - 1)) % opts.length]; markSugg();
+      const b = $("sugg").querySelector(`button[data-i="${suggOn}"]`); if (b) b.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Escape") { e.stopPropagation(); closeSugg(); $("q").blur(); }
+  });
+  $("go").addEventListener("submit", (e) => { e.preventDefault(); if ($("sugg").hidden) buildSugg(); pick(suggOn); });
+  $("sugg").addEventListener("pointerdown", (e) => e.preventDefault()); // keep the box focused while choosing
+  $("sugg").addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) pick(+b.dataset.i); });
+  $("menu").onclick = () => { const open = $("menupop").hidden; $("menupop").hidden = !open; $("menu").setAttribute("aria-expanded", String(open)); };
+  document.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest("#go")) closeSugg();
+    if (!e.target.closest("#menu, #menupop")) { $("menupop").hidden = true; $("menu").setAttribute("aria-expanded", "false"); }
+  });
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") goBack();
     if (state === "street" && document.activeElement !== $("q")) { if (e.key === "ArrowRight") { panVel = 26; panned = true; } if (e.key === "ArrowLeft") { panVel = -26; panned = true; } }
@@ -696,7 +762,7 @@ input::placeholder { color: var(--muted); }
     const dx = e.clientX - p.x; p.x = e.clientX; p.y = e.clientY;
     if (p.down) {
       p.moved = Math.max(p.moved, Math.hypot(p.x - p.sx, p.y - p.sy));
-      if (state === "street") { cam.x = clamp(p.pan0 - (p.x - p.sx) / cam.z, 0, streetW); panVel = -dx / cam.z; if (p.moved > 8) { panned = true; $("hint").style.opacity = 0; } }
+      if (state === "street") { cam.x = clamp(p.pan0 - (p.x - p.sx) / cam.z, 0, streetW); panVel = -dx / cam.z; if (p.moved > 8) panned = true; }
       return;
     }
     if (e.pointerType === "mouse" && state === "street") { hover = uniAt(p.x, p.y); cv.classList.toggle("point", !!hover); }
@@ -707,7 +773,7 @@ input::placeholder { color: var(--muted); }
     panVel = 0; const u = uniAt(p.x, p.y); if (u) enter(u);
   }
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-  cv.addEventListener("wheel", (e) => { if (state === "street") { e.preventDefault(); cam.x = clamp(cam.x + (e.deltaX + e.deltaY) / cam.z, 0, streetW); panned = true; $("hint").style.opacity = 0; } }, { passive: false });
+  cv.addEventListener("wheel", (e) => { if (state === "street") { e.preventDefault(); cam.x = clamp(cam.x + (e.deltaX + e.deltaY) / cam.z, 0, streetW); panned = true; } }, { passive: false });
 
   // ---------- drawing: sky and street ----------
   const stars = (() => { const r = rng(7); return Array.from({ length: 170 }, () => ({ x: r(), y: r() * .7, s: .5 + r() * 1.3, p: r() * 6.28 })); })();
@@ -993,7 +1059,7 @@ input::placeholder { color: var(--muted); }
   requestAnimationFrame(frame);
   if (document.fonts && document.fonts.load) document.fonts.load(`800 13px ${DISPLAY}`).catch(() => {});
   fetch("courses.json", { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(init)
-    .catch(() => { $("sub").textContent = "The catalogue could not load. Check your connection and refresh the page."; });
+    .catch(() => { $("title").textContent = "Could not load. Check your connection and refresh."; });
 })();
 </script>
 </body>

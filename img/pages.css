@@ -8,6 +8,7 @@ h1{font:800 clamp(28px,6vw,42px)/1.08 var(--display);margin:0 0 10px}h2{font:800
 p,li{color:#dfe4f6}a{color:var(--chalk)}.who{color:var(--muted);margin:0 0 14px}
 .cta{display:inline-block;margin:8px 8px 4px 0;padding:11px 17px;border-radius:999px;background:var(--chalk);color:#1b1430;font-weight:700;text-decoration:none}
 .ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+button.cta{font:inherit;font-weight:700;cursor:pointer}
 ol,ul{padding-left:22px}ol li,ul li{margin:3px 0}.small{font-size:13px;color:var(--muted)}
 .list a{text-decoration:none}.list a:hover{text-decoration:underline}.meta{color:var(--muted);font-size:14px}
 .cols{columns:2 260px;column-gap:28px}.cols li{break-inside:avoid}

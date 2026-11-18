@@ -3,8 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Open Lecture Hall</title>
-<meta name="description" content="Tap a university, walk through its doors into a lecture room and open any course to play its free lectures.">
+<title>Open Lecture Hall – free university lectures by subject</title>
+<meta name="description" content="Thousands of free university lecture courses from MIT, Yale, Stanford, Berkeley, Oxford and 300 more, sorted by subject. Watch or listen free: no ads, no sign-up.">
+<link rel="canonical" href="https://openlecturehall.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Open Lecture Hall">
+<meta property="og:title" content="Open Lecture Hall – free university lectures">
+<meta property="og:description" content="Thousands of free university lecture courses from MIT, Yale, Stanford, Berkeley, Oxford and 300 more, sorted by subject. Watch or listen free: no ads, no sign-up.">
+<meta property="og:url" content="https://openlecturehall.com/">
+<meta property="og:image" content="https://openlecturehall.com/img/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Open Lecture Hall","url":"https://openlecturehall.com/","description":"Free university lecture courses, sorted by subject. No ads, no sign-up."}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
@@ -190,7 +201,7 @@ input::placeholder { color: var(--muted); }
   </form>
   <button type="button" id="mine">☆ My shelf</button>
   <button type="button" id="menu" aria-label="More" aria-expanded="false" aria-controls="menupop">⋯</button>
-  <nav id="menupop" hidden><a href="list.html">Plain list of every course</a><a href="about.html">About & rights</a></nav>
+  <nav id="menupop" hidden><a href="list.html">Plain list of every course</a><a href="courses.html">Every subject &amp; university</a><a href="about.html">About & rights</a></nav>
 </header>
 
 <section id="hall" hidden aria-label="Courses at this university, by subject">
@@ -374,6 +385,7 @@ input::placeholder { color: var(--muted); }
     if (want === MINE.name) openMine();
     else if (want.startsWith("subject:")) { const si = data.subjects.indexOf(want.slice(8)); if (si >= 0) openSubject(si); }
     else if (want.startsWith("search:")) openSearch(want.slice(7));
+    else if (want.startsWith("course:")) openCourse(want.slice(7));
     else if (u) enter(u);
   }
 
@@ -546,6 +558,14 @@ input::placeholder { color: var(--muted); }
   }
   function openSubject(si) { openVirtual({ name: data.subjects[si], virtual: true, build: () => subjectHall(si) }, "subject:" + data.subjects[si]); }
   function openSearch(q) { q = q.trim(); if (q) openVirtual({ name: q, virtual: true, build: () => searchHall(q) }, "search:" + q); }
+  // #course:<id>, used by the per-course pages: open that course's book in a small hall with its university's other courses on that subject
+  function openCourse(id) {
+    const c = byKey.get(id); if (!c) return;
+    const list = [c, ...c.u.courses.filter((x) => x !== c && x.subj === c.subj)];
+    openVirtual({ name: c.u.name, virtual: true, build: () => ({ showUni: true, title: c.u.name, sub: data.subjects[c.subj],
+      groups: [{ label: data.subjects[c.subj], hue: HUES[c.subj % HUES.length], list, note: `${num(list.length)}` }] }) }, "course:" + id);
+    openBook(c);
+  }
 
   function renderHall(h) {
     $("hname").textContent = h.title; $("hsub").textContent = h.sub;

@@ -1,0 +1,13 @@
+:root{--night:#0b1030;--ink:#eef1fb;--muted:#b6bede;--chalk:#f3c64d;--panel:#161b3d;--line:rgba(255,255,255,.14);
+--display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--body:-apple-system,"Segoe UI",Roboto,"Noto Sans",system-ui,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--night);color:var(--ink);font:16px/1.55 var(--body)}
+main{max-width:780px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 16px 64px}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}nav a{font-weight:600;text-decoration:none;padding:8px 13px;border:1px solid var(--line);border-radius:999px;color:var(--ink);background:var(--panel)}
+.eyebrow{font:600 11px/1.3 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--chalk);margin:0 0 8px}
+h1{font:800 clamp(28px,6vw,42px)/1.08 var(--display);margin:0 0 10px}h2{font:800 21px/1.2 var(--display);margin:30px 0 8px}
+p,li{color:#dfe4f6}a{color:var(--chalk)}.who{color:var(--muted);margin:0 0 14px}
+.cta{display:inline-block;margin:8px 8px 4px 0;padding:11px 17px;border-radius:999px;background:var(--chalk);color:#1b1430;font-weight:700;text-decoration:none}
+.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+ol,ul{padding-left:22px}ol li,ul li{margin:3px 0}.small{font-size:13px;color:var(--muted)}
+.list a{text-decoration:none}.list a:hover{text-decoration:underline}.meta{color:var(--muted);font-size:14px}
+.cols{columns:2 260px;column-gap:28px}.cols li{break-inside:avoid}
